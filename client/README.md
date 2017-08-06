@@ -1,0 +1,1 @@
+Before you complain, [no, I'm not the only one that puts multiple packages in one repo](https://github.com/babel/babel/blob/master/doc/design/monorepo.md)

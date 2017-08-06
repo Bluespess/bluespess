@@ -1,0 +1,8 @@
+* text=auto
+
+*.js text
+*.json text
+*.js.map text
+
+*.png binary
+*.ogg binary

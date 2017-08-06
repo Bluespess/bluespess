@@ -1,0 +1,22 @@
+{
+  "name": "bluespess",
+  "version": "0.0.1",
+  "description": "2d spacemen engine on node",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bluespess/bluespess.git"
+},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "monster860",
+  "license": "MIT",
+  "dependencies": {
+    "toposort": "^1.0.3",
+    "ws": "^2.2.3"
+  },
+  "engines": {
+    "node": ">=6.4.0"
+  }
+}

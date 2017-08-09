@@ -1,6 +1,6 @@
 {
   "name": "bluespess-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "client for 2d spacemen engine on node",
   "main": "index.js",
   "repository": {

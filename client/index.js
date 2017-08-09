@@ -11,10 +11,7 @@ class BluespessClient {
 		if(!wsurl)
 			wsurl = "ws" + window.location.origin.substring(4);
 		this.resRoot = resRoot;
-		// open the connection
-		this.connection = new WebSocket(wsurl);
-		
-		this.panel_manager = new PanelManager();
+		this.wsurl = wsurl;
 		this.atoms_by_netid = {};
 		this.atoms = [];
 		this.dirty_atoms = [];
@@ -23,7 +20,13 @@ class BluespessClient {
 		this.icon_meta_load_queue = {};
 		this.icon_metas = {};
 		this.appearance_controllers = {Default};
-		
+	}
+	
+	login() {
+		if(global.is_bs_editor_env)
+			throw new Error("Client should not be started in editor mode");
+		this.connection = new WebSocket(this.wsurl);
+		this.panel_manager = new PanelManager();
 		this.connection.addEventListener('message', this.handleSocketMessage.bind(this));
 		this.connection.addEventListener('open', () => {this.connection.send(JSON.stringify({"login":"guest" + Math.floor(Math.random()*1000000)}));});
 		requestAnimationFrame(this.anim_loop.bind(this)); // Start the rendering loop

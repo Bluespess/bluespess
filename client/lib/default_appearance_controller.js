@@ -7,13 +7,28 @@ class Default {
 		this.atom = atom;
 	}
 
+	fully_load() {
+		if(this.icon_meta || !this.atom._appearance_vars.icon)
+			return Promise.resolve();
+		return new Promise((resolve, reject) => {
+			this.atom.client.enqueue_icon_meta_load(this.atom._appearance_vars.icon, (err) => {
+				if(err)
+					reject(err);
+				else
+					resolve();
+			});
+		});
+	}
+
 	on_appearance_change(changes) {
 		var appearance_vars = this.atom._appearance_vars
 		if(changes.icon != undefined) {
 			this.icon_meta = this.atom.client.icon_metas[changes.icon];
 			if(this.icon_meta == undefined) {
-				this.atom.client.enqueue_icon_meta_load(changes.icon, () => {
-					if(appearance_vars.icon == changes.icon) {
+				this.atom.client.enqueue_icon_meta_load(changes.icon, (err) => {
+					if(err)
+						console.error(err);
+					else if(appearance_vars.icon == changes.icon) {
 						this.on_appearance_change({icon: changes.icon});
 					}
 				});
@@ -53,7 +68,7 @@ class Default {
 	get_bounds() {
 		if(!this.dir_meta || !this.icon_meta || !this.icon_state_meta)
 			return;
-		return {x:0,y:0,width:this.icon_state_meta.width/32,height:this.icon_state_meta.height/32};
+		return {x:0,y:1-(this.icon_state_meta.height/32),width:this.icon_state_meta.width/32,height:this.icon_state_meta.height/32};
 	}
 
 	on_render_tick(timestamp) {

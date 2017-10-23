@@ -10,7 +10,7 @@ function enqueue_icon_meta_load(newIcon, doneFunc) {
 	this.icon_meta_load_queue[newIcon] = doneFunc ? [doneFunc] : [];
 	$.ajax({url: this.resRoot+newIcon+".json"}).done((meta) => {
 		if(typeof meta === 'string') {
-			meta = JSON.parse(data);
+			meta = JSON.parse(meta);
 		}
 		for(var statekey in meta) {
 			if(!meta.hasOwnProperty(statekey)) {
@@ -42,7 +42,7 @@ function enqueue_icon_meta_load(newIcon, doneFunc) {
 			canvas.height = meta.__image_object.height;
 			ctx.drawImage(meta.__image_object, 0, 0);
 			meta.__image_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-			
+
 			var load_queue = this.icon_meta_load_queue[newIcon];
 			for(var i = 0; i < load_queue.length; i++) {
 				load_queue[i]();
@@ -50,9 +50,13 @@ function enqueue_icon_meta_load(newIcon, doneFunc) {
 			this.icon_meta_load_queue[newIcon] = undefined;
 		})
 		this.icon_metas[newIcon] = meta;
-	}).fail(function() {
+	}).fail(function(error) {
 		// Failure occured
 		this.icon_metas[newIcon] = {};
+		var load_queue = this.icon_meta_load_queue[newIcon];
+		for(var i = 0; i < load_queue.length; i++) {
+			load_queue[i](error || new Error(`Loading failed`));
+		}
 	})
 }
 

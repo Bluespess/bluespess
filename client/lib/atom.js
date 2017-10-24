@@ -2,7 +2,7 @@
 const $ = require('jquery');
 
 class Atom {
-	constructor(client, {x=0,y=0,network_id,appearance={},overlays,}) {
+	constructor(client, {x=0,y=0,network_id,appearance={},overlays,components=[], component_vars={}} ) {
 		this.client = client;
 		this._appearance_vars = appearance;
 		this.x = x;
@@ -24,6 +24,14 @@ class Atom {
 					continue;
 				this.set_overlay(key, overlays[key]);
 			}
+		this.components = {};
+		for(var component_name of components) {
+			if(!client.components.hasOwnProperty(component_name)) {
+				console.warn(`Server passed an unknown networked component '${component_name}'! Yell at the devs of your server.`);
+				continue;
+			}
+			this.components[component_name] = new (client.components[component_name])(this, component_vars[component_name]);
+		}
 	}
 
 	appearance(key, val) {

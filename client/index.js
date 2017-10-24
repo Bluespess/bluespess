@@ -5,6 +5,7 @@ const Atom = require('./lib/atom.js');
 const PanelManager = require('./lib/panels/manager.js');
 const Panel = require('./lib/panels/panel.js');
 const Default = require('./lib/default_appearance_controller.js');
+const Component = require('./lib/component.js');
 
 class BluespessClient {
 	constructor(wsurl, resRoot = "") {
@@ -20,8 +21,9 @@ class BluespessClient {
 		this.icon_meta_load_queue = {};
 		this.icon_metas = {};
 		this.appearance_controllers = {Default};
+		this.components = {};
 	}
-	
+
 	login() {
 		if(global.is_bs_editor_env)
 			throw new Error("Client should not be started in editor mode");
@@ -35,8 +37,23 @@ class BluespessClient {
 		this.updateMapWindowSizes();
 		$(window).resize(this.updateMapWindowSizes);
 		$('#mainlayer').click(this.handleClick.bind(this));
-		
+
 		new Panel(this.panel_manager, "testpanel", {width:400, height:400, title:"Test panel"});
+	}
+
+	importModule(mod) {
+		if(mod.components) {
+			for(var componentName in mod.components) {
+				if(mod.components.hasOwnProperty(componentName)) {
+					if(this.components[componentName]) {
+						throw new Error(`Component ${componentName} already exists!`);
+					}
+					if(mod.components[componentName].name != componentName)
+						throw new Error(`Component name mismatch! Named ${componentName} in map and constructor is named ${mod.components[componentName].name}`);
+					this.components[componentName] = mod.components[componentName];
+				}
+			}
+		}
 	}
 
 	handleSocketMessage(event) {
@@ -56,7 +73,7 @@ class BluespessClient {
 				for(var key in inst) {
 					if(!inst.hasOwnProperty(key))
 						continue;
-					if(key == "appearance" || key == "network_id" || key == "overlays") {
+					if(key == "appearance" || key == "network_id" || key == "overlays" || key == "components") {
 						continue;
 					}
 					atom[key] = inst[key];
@@ -77,6 +94,17 @@ class BluespessClient {
 						if(!inst.overlays.hasOwnProperty(key))
 							continue;
 						atom.set_overlay(key, inst.overlays[key]);
+					}
+				}
+				if(inst.components) {
+					for(var component_name in inst.components) {
+						if(!inst.components.hasOwnProperty(component_name))
+							continue;
+						for(var key in inst.components[component_name]) {
+							if(!inst.components[component_name].hasOwnProperty(key))
+								continue;
+							this.components[component_name][key] = inst.components[component_name][key];
+						}
 					}
 				}
 			}
@@ -101,7 +129,7 @@ class BluespessClient {
 			panel_manager.handle_message(obj.panel);
 		}
 		this.atoms.sort(Atom.atom_comparator);
-		
+
 		return obj;
 	}
 
@@ -132,9 +160,26 @@ class BluespessClient {
 	}
 }
 
+// This is pretty much identical to the function on the server's lib/utils.js
+BluespessClient.chain_func = function(func1, func2) {
+	if(func2 == undefined)
+		throw new Error('Chaining undefined function!');
+	return function chained_func(...args) {
+		return func2.call(this, (...override_args)=>{
+			if(!func1)
+				return;
+			if(override_args.length)
+				return func1.call(this, ...override_args);
+			else
+				return func1.call(this, ...args);
+		}, ...args)
+	}
+}
+
 BluespessClient.prototype.enqueue_icon_meta_load = require('./lib/icon_loader.js');
 BluespessClient.prototype.anim_loop = require('./lib/renderer.js');
 
 BluespessClient.Atom = Atom;
+BluespessClient.Component = Component;
 
 module.exports = BluespessClient

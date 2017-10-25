@@ -90,9 +90,9 @@ class Atom {
 				network_id: this.network_id + "_OVERLAY_" + key,
 
 			});
-			Object.defineProperty(overlay, 'x', {get:() => {return this.x}, set:()=>{return true;}});
-			Object.defineProperty(overlay, 'y', {get:() => {return this.y}, set:()=>{return true;}});
-			Object.defineProperty(overlay, 'glide', {get:() => {return this.glide}, set:()=>{return true;}});
+			Object.defineProperty(overlay, 'x', {get:() => {return this.x;}, set:()=>{return true;}});
+			Object.defineProperty(overlay, 'y', {get:() => {return this.y;}, set:()=>{return true;}});
+			Object.defineProperty(overlay, 'glide', {get:() => {return this.glide;}, set:()=>{return true;}});
 			this.overlays[key] = overlay;
 			this.client.atoms.sort(Atom.atom_comparator);
 			return;
@@ -115,11 +115,11 @@ class Atom {
 				glidex = this.glide.x;
 				glidey = this.glide.y;
 				var glide_size = +this._appearance_vars.glide_size;
-				if(glide_size != glide_size) glide_size = this.client.glide_size
+				if(glide_size != glide_size) glide_size = this.client.glide_size;
 				var dist = Math.max(glide_size * (timestamp - this.glide.lasttime) / 1000,0);
 				this.glide.lasttime = timestamp;
-				if(Math.abs(glidex) < dist){glidex = 0;} else {glidex -= Math.sign(glidex) * dist}
-				if(Math.abs(glidey) < dist){glidey = 0;} else {glidey -= Math.sign(glidey) * dist}
+				if(Math.abs(glidex) < dist){glidex = 0;} else {glidex -= Math.sign(glidex) * dist;}
+				if(Math.abs(glidey) < dist){glidey = 0;} else {glidey -= Math.sign(glidey) * dist;}
 				this.glide.x = glidex; this.glide.y = glidey;
 				if(glidex == 0 && glidey == 0) this.glide = undefined;
 			}
@@ -138,6 +138,6 @@ Atom.atom_comparator = function(a, b) {
 		comparison = aol-bol;
 	}
 	return comparison;
-}
+};
 
 module.exports = Atom;

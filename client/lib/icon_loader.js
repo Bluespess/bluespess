@@ -30,7 +30,7 @@ function enqueue_icon_meta_load(newIcon, doneFunc) {
 				}
 				totalDelays[dir] = totalDelay;
 			}
-			state.totalDelays = totalDelays
+			state.totalDelays = totalDelays;
 		}
 		meta.__image_object = new Image();
 		meta.__image_object.src = this.resRoot+newIcon;
@@ -48,7 +48,7 @@ function enqueue_icon_meta_load(newIcon, doneFunc) {
 				load_queue[i]();
 			}
 			this.icon_meta_load_queue[newIcon] = undefined;
-		})
+		});
 		this.icon_metas[newIcon] = meta;
 	}).fail(function(error) {
 		// Failure occured
@@ -57,7 +57,7 @@ function enqueue_icon_meta_load(newIcon, doneFunc) {
 		for(var i = 0; i < load_queue.length; i++) {
 			load_queue[i](error || new Error(`Loading failed`));
 		}
-	})
+	});
 }
 
 module.exports = enqueue_icon_meta_load;

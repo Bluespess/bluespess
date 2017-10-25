@@ -1,5 +1,4 @@
 'use strict';
-const $ = require('jquery');
 const dir_progressions = require('./dir_progressions.js');
 
 class Default {
@@ -21,7 +20,7 @@ class Default {
 	}
 
 	on_appearance_change(changes) {
-		var appearance_vars = this.atom._appearance_vars
+		var appearance_vars = this.atom._appearance_vars;
 		if(changes.icon != undefined) {
 			this.icon_meta = this.atom.client.icon_metas[changes.icon];
 			if(this.icon_meta == undefined) {
@@ -32,7 +31,7 @@ class Default {
 						this.on_appearance_change({icon: changes.icon});
 					}
 				});
-				return
+				return;
 			}
 		}
 		if(changes.icon != undefined || changes.icon_state != undefined || changes.moving != undefined) {
@@ -92,7 +91,7 @@ class Default {
 			this.atom.mark_dirty();
 	}
 
-	draw(ctx, timestamp) {
+	draw(ctx) {
 		if(!this.dir_meta || !this.icon_meta || !this.icon_meta.__image_object)
 			return;
 		var frame_meta = this.dir_meta[this.icon_frame >= 0 && this.icon_frame < this.dir_meta.length ? this.icon_frame : 0];
@@ -101,7 +100,7 @@ class Default {
 			0, 0, this.icon_state_meta.width, this.icon_state_meta.height);
 	}
 
-	is_mouse_over(x, y, timestamp) {
+	is_mouse_over(x, y) {
 		if(!this.icon_meta || !this.dir_meta || !this.icon_meta.__image_data)
 			return false;
 		var pxx = Math.floor(x*32);

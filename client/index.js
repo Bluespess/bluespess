@@ -32,8 +32,8 @@ class BluespessClient {
 		this.connection.addEventListener('message', this.handleSocketMessage.bind(this));
 		this.connection.addEventListener('open', () => {this.connection.send(JSON.stringify({"login":"guest" + Math.floor(Math.random()*1000000)}));});
 		requestAnimationFrame(this.anim_loop.bind(this)); // Start the rendering loop
-		$(document).keydown((e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keydown":{which:e.which,id:e.target.id}}))});
-		$(document).keyup((e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keyup":{which:e.which,id:e.target.id}}))});
+		$(document).keydown((e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keydown":{which:e.which,id:e.target.id}}));});
+		$(document).keyup((e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keyup":{which:e.which,id:e.target.id}}));});
 		this.updateMapWindowSizes();
 		$(window).resize(this.updateMapWindowSizes);
 		$('#mainlayer').click(this.handleClick.bind(this));
@@ -59,18 +59,18 @@ class BluespessClient {
 	handleSocketMessage(event) {
 		var obj = JSON.parse(event.data);
 		if(obj.create_atoms) {
-			for(var i = 0; i < obj.create_atoms.length; i++) {
+			for(let i = 0; i < obj.create_atoms.length; i++) {
 				new Atom(this, obj.create_atoms[i]);
 			}
 		}
 		if(obj.update_atoms) {
-			for(var i = 0; i < obj.update_atoms.length; i++) {
+			for(let i = 0; i < obj.update_atoms.length; i++) {
 				var inst = obj.update_atoms[i];
-				var atom = this.atoms_by_netid[inst.network_id];
+				let atom = this.atoms_by_netid[inst.network_id];
 				if(!atom) continue;
 				var oldx = atom.x;
 				var oldy = atom.y;
-				for(var key in inst) {
+				for(let key in inst) {
 					if(!inst.hasOwnProperty(key))
 						continue;
 					if(key == "appearance" || key == "network_id" || key == "overlays" || key == "components") {
@@ -82,7 +82,7 @@ class BluespessClient {
 					atom.glide = {x:oldx-atom.x,y:oldy-atom.y,lasttime:performance.now()};
 				}
 				if(inst.appearance) {
-					for(var key in inst.appearance) {
+					for(let key in inst.appearance) {
 						if(!inst.appearance.hasOwnProperty(key))
 							continue;
 						atom._appearance_vars[key] = inst.appearance[key];
@@ -90,17 +90,17 @@ class BluespessClient {
 					atom.on_appearance_change(inst.appearance);
 				}
 				if(inst.overlays) {
-					for(var key in inst.overlays) {
+					for(let key in inst.overlays) {
 						if(!inst.overlays.hasOwnProperty(key))
 							continue;
 						atom.set_overlay(key, inst.overlays[key]);
 					}
 				}
 				if(inst.components) {
-					for(var component_name in inst.components) {
+					for(let component_name in inst.components) {
 						if(!inst.components.hasOwnProperty(component_name))
 							continue;
-						for(var key in inst.components[component_name]) {
+						for(let key in inst.components[component_name]) {
 							if(!inst.components[component_name].hasOwnProperty(key))
 								continue;
 							this.components[component_name][key] = inst.components[component_name][key];
@@ -111,7 +111,7 @@ class BluespessClient {
 		}
 		if(obj.delete_atoms) {
 			for(var i = 0; i < obj.delete_atoms.length; i++) {
-				var atom = this.atoms_by_netid[obj.delete_atoms[i]];
+				let atom = this.atoms_by_netid[obj.delete_atoms[i]];
 				if(!atom) continue;
 				atom.del();
 			}
@@ -126,7 +126,7 @@ class BluespessClient {
 			$('#chatwindow').append('<div>'+obj.to_chat+'</div>');
 		}
 		if(obj.panel) {
-			panel_manager.handle_message(obj.panel);
+			this.panel_manager.handle_message(obj.panel);
 		}
 		this.atoms.sort(Atom.atom_comparator);
 
@@ -156,7 +156,7 @@ class BluespessClient {
 		}
 		if(!clickedAtom)
 			return;
-		this.connection.send(JSON.stringify({"click_on":{"atom":clickedAtom.network_id,"x":localX,"y":localY}}))
+		this.connection.send(JSON.stringify({"click_on":{"atom":clickedAtom.network_id,"x":localX,"y":localY}}));
 	}
 }
 
@@ -172,9 +172,9 @@ BluespessClient.chain_func = function(func1, func2) {
 				return func1.call(this, ...override_args);
 			else
 				return func1.call(this, ...args);
-		}, ...args)
-	}
-}
+		}, ...args);
+	};
+};
 
 BluespessClient.prototype.enqueue_icon_meta_load = require('./lib/icon_loader.js');
 BluespessClient.prototype.anim_loop = require('./lib/renderer.js');
@@ -182,4 +182,4 @@ BluespessClient.prototype.anim_loop = require('./lib/renderer.js');
 BluespessClient.Atom = Atom;
 BluespessClient.Component = Component;
 
-module.exports = BluespessClient
+module.exports = BluespessClient;

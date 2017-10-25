@@ -1,3 +1,5 @@
+'use strict';
+
 class Component {
 	constructor(atom, template) {
 		if(template) {
@@ -6,3 +8,5 @@ class Component {
 		Object.defineProperty(this, 'atom', {enumerable: false, configurable: false, writable: false, value: atom});
 	}
 }
+
+module.exports = Component;

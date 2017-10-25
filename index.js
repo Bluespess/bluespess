@@ -2,4 +2,4 @@
 
 var Bluespess = require('./lib/server.js');
 
-module.exports = Bluespess
+module.exports = Bluespess;

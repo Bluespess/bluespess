@@ -1,10 +1,12 @@
+'use strict';
+
 const $ = require('jquery');
 
 class Panel {
-	constructor(manager, id, {width=400, height=400, title="", can_close=true,}={}) {
+	constructor(manager, id, {width=400, height=400, title="", can_close=true}={}) {
 		var left = $(document).width() / 2 - width / 2;
 		var top = $(document).height() / 2 - height / 2;
-		this.containerObj = $(`<div class='uiframe-container' style='width:${width}px;height:${height}px;left:${left}px;top:${top}px'></div>`)
+		this.containerObj = $(`<div class='uiframe-container' style='width:${width}px;height:${height}px;left:${left}px;top:${top}px'></div>`);
 		this.panelObj = $(`<div class='uiframe' style=''></div>`);
 		this.headerObj = $(`<div class='uiframe-header' unselectable="on">${title}</div>`);
 		this.contentObj = $("<div class='uiframe-content'></div>");
@@ -12,13 +14,14 @@ class Panel {
 		this.panelObj.append(this.contentObj);
 		this.containerObj.append(this.panelObj);
 		$('#uiframes-container').append(this.containerObj);
-		
+
 		this.headerObj.mousedown(this._start_drag.bind(this));
 		this.containerObj.mousedown(this._start_resize.bind(this));
 		this.containerObj.mousemove(this._container_mousemove.bind(this));
 		this.containerObj.mouseout(this._container_mouseout.bind(this));
+		this.can_close = can_close;
 	}
-	
+
 	_start_drag(e) {
 		if(e.target != this.headerObj[0]) {
 			return;
@@ -34,15 +37,15 @@ class Panel {
 			lastclienty = e.clientY;
 			this.containerObj.css("left", Math.max(-pad,this.containerObj.position().left + dx) + "px");
 			this.containerObj.css("top", Math.max(-pad,this.containerObj.position().top + dy) + "px");
-		}
-		var mouseup = (e) => {
+		};
+		var mouseup = () => {
 			$(document).off("mousemove", mousemove);
 			$(document).off("mouseup", mouseup);
-		}
+		};
 		$(document).mousemove(mousemove);
 		$(document).mouseup(mouseup);
 	}
-	
+
 	_resize_meta(e) {
 		var pad = (this.containerObj.outerWidth() - this.panelObj.width())/2;
 		var width = this.containerObj.width();
@@ -70,7 +73,7 @@ class Panel {
 		out.can_resize = out.drag_right || out.drag_left || out.drag_up || out.drag_down;
 		return out;
 	}
-	
+
 	_start_resize(e) {
 		var resize_meta = this._resize_meta(e);
 		if(!resize_meta.can_resize)
@@ -96,20 +99,20 @@ class Panel {
 			} else if(resize_meta.drag_down) {
 				this.containerObj.css("height", Math.max(35,this.containerObj.height() + dy) + "px");
 			}
-		}
-		var mouseup = (e) => {
+		};
+		var mouseup = () => {
 			$(document).off("mousemove", mousemove);
 			$(document).off("mouseup", mouseup);
-		}
+		};
 		$(document).mousemove(mousemove);
 		$(document).mouseup(mouseup);
 	}
-	
+
 	_container_mousemove(e) {
 		var resize_meta = this._resize_meta(e);
 		this.containerObj.css("cursor", resize_meta.cursor);
 	}
-	_container_mouseout(e) {
+	_container_mouseout() {
 		this.containerObj.css("cursor", "default");
 	}
 }

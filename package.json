@@ -1,6 +1,6 @@
 {
   "name": "bluespess",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "2d spacemen engine on node",
   "main": "index.js",
   "repository": {

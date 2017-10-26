@@ -111,22 +111,32 @@ class Atom {
 		} else {
 			var glidex = 0;
 			var glidey = 0;
+			this.update_glide(timestamp);
 			if(this.glide) {
 				glidex = this.glide.x;
 				glidey = this.glide.y;
-				var glide_size = +this._appearance_vars.glide_size;
-				if(glide_size != glide_size) glide_size = this.client.glide_size;
-				var dist = Math.max(glide_size * (timestamp - this.glide.lasttime) / 1000,0);
-				this.glide.lasttime = timestamp;
-				if(Math.abs(glidex) < dist){glidex = 0;} else {glidex -= Math.sign(glidex) * dist;}
-				if(Math.abs(glidey) < dist){glidey = 0;} else {glidey -= Math.sign(glidey) * dist;}
-				this.glide.x = glidex; this.glide.y = glidey;
-				if(glidex == 0 && glidey == 0) this.glide = undefined;
 			}
-			dispx = (this.x-this.client.eyes[""].x-(this.client.eyes[""].glide?this.client.eyes[""].glide.x:0)+7+glidex)*32;
-			dispy = (this.y-this.client.eyes[""].y-(this.client.eyes[""].glide?this.client.eyes[""].glide.y:0)-7+glidey)*-32;
+			if(this.client.eyes[""] instanceof Atom)
+				this.client.eyes[""].update_glide(timestamp);
+			dispx = Math.round((this.x-this.client.eyes[""].x-(this.client.eyes[""].glide?this.client.eyes[""].glide.x:0)+7+glidex)*32);
+			dispy = Math.round((this.y-this.client.eyes[""].y-(this.client.eyes[""].glide?this.client.eyes[""].glide.y:0)-7+glidey)*-32);
 		}
 		return {dispx, dispy};
+	}
+
+	update_glide(timestamp) {
+		if(!this.glide)
+			return;
+		var glidex = this.glide.x;
+		var glidey = this.glide.y;
+		var glide_size = +this._appearance_vars.glide_size;
+		if(glide_size != glide_size) glide_size = this.client.glide_size;
+		var dist = Math.max(glide_size * (timestamp - this.glide.lasttime) / 1000,0);
+		this.glide.lasttime = timestamp;
+		if(Math.abs(glidex) < dist){glidex = 0;} else {glidex -= Math.sign(glidex) * dist;}
+		if(Math.abs(glidey) < dist){glidey = 0;} else {glidey -= Math.sign(glidey) * dist;}
+		this.glide.x = glidex; this.glide.y = glidey;
+		if(glidex == 0 && glidey == 0) this.glide = undefined;
 	}
 }
 

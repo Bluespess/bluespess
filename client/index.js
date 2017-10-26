@@ -156,7 +156,7 @@ class BluespessClient {
 		}
 		if(!clickedAtom)
 			return;
-		this.connection.send(JSON.stringify({"click_on":{"atom":clickedAtom.network_id,"x":localX,"y":localY}}));
+		this.connection.send(JSON.stringify({"click_on":{"atom":clickedAtom.network_id,"x":localX,"y":localY, "ctrlKey": e.ctrlKey, "shiftKey": e.shiftKey, "altKey": e.altKey}}));
 	}
 }
 

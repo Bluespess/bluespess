@@ -4,12 +4,12 @@ function anim_loop(timestamp) {
 	ctx.clearRect(0,0,480,480);
 	for(var i = 0; i < this.atoms.length; i++) {
 		var atom = this.atoms[i];
-		if(atom && atom.appearance_controller) {
-			atom.appearance_controller.on_render_tick(timestamp);
+		if(atom) {
+			atom.on_render_tick(timestamp);
 			var {dispx, dispy} = atom.get_displacement(timestamp);
 			ctx.save();
 			ctx.translate(dispx, dispy);
-			atom.appearance_controller.draw(ctx, timestamp);
+			atom.draw(ctx, timestamp);
 			ctx.restore();
 		}
 	}

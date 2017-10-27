@@ -2,9 +2,9 @@
 
 const $ = require('jquery');
 const Atom = require('./lib/atom.js');
+const IconRenderer = require('./lib/icon_renderer.js');
 const PanelManager = require('./lib/panels/manager.js');
 const Panel = require('./lib/panels/panel.js');
-const Default = require('./lib/default_appearance_controller.js');
 const Component = require('./lib/component.js');
 
 class BluespessClient {
@@ -20,7 +20,6 @@ class BluespessClient {
 		this.glide_size = 10;
 		this.icon_meta_load_queue = {};
 		this.icon_metas = {};
-		this.appearance_controllers = {Default};
 		this.components = {};
 	}
 
@@ -58,6 +57,7 @@ class BluespessClient {
 
 	handleSocketMessage(event) {
 		var obj = JSON.parse(event.data);
+		console.log(obj);
 		if(obj.create_atoms) {
 			for(let i = 0; i < obj.create_atoms.length; i++) {
 				new Atom(this, obj.create_atoms[i]);
@@ -80,14 +80,6 @@ class BluespessClient {
 				}
 				if((oldx != atom.x || oldy != atom.y) && Math.abs(Math.max(atom.x-oldx,atom.y-oldy)) <= 1.00001) {
 					atom.glide = {x:oldx-atom.x,y:oldy-atom.y,lasttime:performance.now()};
-				}
-				if(inst.appearance) {
-					for(let key in inst.appearance) {
-						if(!inst.appearance.hasOwnProperty(key))
-							continue;
-						atom._appearance_vars[key] = inst.appearance[key];
-					}
-					atom.on_appearance_change(inst.appearance);
 				}
 				if(inst.overlays) {
 					for(let key in inst.overlays) {
@@ -148,8 +140,8 @@ class BluespessClient {
 			var {dispx, dispy} = atom.get_displacement(performance.now());
 			var localX = (clickX - dispx)/32;
 			var localY = 1-(clickY - dispy)/32;
-			var bounds = atom.appearance_controller.get_bounds();
-			if(localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height && atom.appearance_controller.is_mouse_over(localX, localY, performance.now())) {
+			var bounds = atom.get_bounds();
+			if(localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height && atom.is_mouse_over(localX, localY, performance.now())) {
 				clickedAtom = atom;
 				break;
 			}
@@ -181,5 +173,6 @@ BluespessClient.prototype.anim_loop = require('./lib/renderer.js');
 
 BluespessClient.Atom = Atom;
 BluespessClient.Component = Component;
+BluespessClient.IconRenderer = IconRenderer;
 
 module.exports = BluespessClient;

@@ -1,69 +1,49 @@
 'use strict';
-const $ = require('jquery');
+const IconRenderer = require('./icon_renderer.js');
 
 class Atom {
-	constructor(client, {x=0,y=0,network_id,appearance={},overlays,components=[], component_vars={}} ) {
+	constructor(client, instobj = {}) {
+		if(!instobj.hasOwnProperty('x'))
+			instobj.x = 0;
+		if(!instobj.hasOwnProperty('y'))
+			instobj.y = 0;
 		this.client = client;
-		this._appearance_vars = appearance;
-		this.x = x;
-		this.y = y;
-		this.network_id = network_id;
-		this.appearance_controller = appearance.appearance_controller_type ? new this.client.appearance_controllers[appearance.appearance_controller_type](this) : new this.client.appearance_controllers.Default(this);
+		this.main_icon_renderer = new IconRenderer(this);
+
+		for(let key in instobj) {
+			if(!instobj.hasOwnProperty(key))
+				continue;
+			if(key == "overlays" || key == "components" || key == "component_vars")
+				continue;
+			this[key] = instobj[key];
+		}
 		this.is_destroyed = false;
 		this.client.atoms.push(this);
 		if(this.network_id) {
 			this.client.atoms_by_netid[this.network_id] = this;
 		}
 
-		this.on_appearance_change($.extend({}, this._appearance_vars));
 		this.mark_dirty();
 		this.overlays = {};
-		if(overlays)
-			for(var key in overlays) {
-				if(!overlays.hasOwnProperty(key))
+		this.overlay_renderers_list = [];
+		this.overlay_renderers = {};
+		if(instobj.overlays)
+			for(let key in instobj.overlays) {
+				if(!instobj.overlays.hasOwnProperty(key))
 					continue;
-				this.set_overlay(key, overlays[key]);
+				this.set_overlay(key, instobj.overlays[key]);
 			}
 		this.components = {};
-		for(var component_name of components) {
+		for(var component_name of instobj.components || []) {
 			if(!client.components.hasOwnProperty(component_name)) {
 				console.warn(`Server passed an unknown networked component '${component_name}'! Yell at the devs of your server.`);
 				continue;
 			}
-			this.components[component_name] = new (client.components[component_name])(this, component_vars[component_name]);
-		}
-	}
-
-	appearance(key, val) {
-		if(val === undefined) {
-			return this._appearance_vars[key];
-		} else {
-			if(this._appearance_vars[key] === val) {
-				return val;
-			}
-			this._appearance_vars[key] = val;
-			var changes = {};
-			changes[key] = val;
-			this.on_appearance_change(changes);
-		}
-	}
-
-	on_appearance_change(changes) {
-		this.appearance_controller.on_appearance_change(changes);
-		for(var key in this.overlays) {
-			if(!this.overlays.hasOwnProperty(key))
-				continue;
-			this.overlays[key].on_appearance_change(changes);
+			this.components[component_name] = new (client.components[component_name])(this, instobj.component_vars ? instobj.component_vars[component_name] : {});
 		}
 	}
 
 	del() {
-		for(var key in this.overlays) {
-			if(!this.overlays.hasOwnProperty(key))
-				continue;
-			this.overlays[key].del();
-			delete this.overlays[key];
-		}
 		this.is_destroyed = true;
 		this.client.atoms.splice(this.client.atoms.indexOf(this), 1);
 		delete this.client.atoms_by_netid[this.network_id];
@@ -72,42 +52,50 @@ class Atom {
 	mark_dirty() {
 		if(this.dirty)
 			return;
-		this.dirty = 1;
+		this.dirty = true;
 		this.client.dirty_atoms.push(this);
 	}
 
 	set_overlay(key, value) {
+		var overlay_renderer;
 		if(this.overlays[key] && !value) {
-			this.overlays[key].del();
 			delete this.overlays[key];
+			overlay_renderer = this.overlay_renderers[key];
+			var idx = this.overlay_renderers_list.indexOf(overlay_renderer);
+			if(idx != -1)
+				this.overlay_renderers_list.splice(idx, 1);
+			delete this.overlay_renderers[key];
+			this.mark_dirty();
 			return;
 		}
-		if(!value)
-			return;
-		if(!this.overlays[key]) {
-			var overlay = new Atom(this.client, {
-				appearance: $.extend(Object.create(this._appearance_vars), value),
-				network_id: this.network_id + "_OVERLAY_" + key,
-
-			});
-			Object.defineProperty(overlay, 'x', {get:() => {return this.x;}, set:()=>{return true;}});
-			Object.defineProperty(overlay, 'y', {get:() => {return this.y;}, set:()=>{return true;}});
-			Object.defineProperty(overlay, 'glide', {get:() => {return this.glide;}, set:()=>{return true;}});
-			this.overlays[key] = overlay;
-			this.client.atoms.sort(Atom.atom_comparator);
+		if(!this.overlays[key] && value) {
+			this.overlays[key] = value;
+			overlay_renderer = new IconRenderer(this);
+			this.overlay_renderers_list.push(overlay_renderer);
+			this.overlay_renderers[key] = overlay_renderer;
+		} else if(this.overlays[key] && value) {
+			overlay_renderer = this.overlay_renderers[key];
+			this.overlays[key] = value;
+		} else {
 			return;
 		}
-		$.extend(this.overlays[key]._appearance_vars, value);
-		this.overlays[key].on_appearance_change(value);
-		this.client.atoms.sort(Atom.atom_comparator);
+		overlay_renderer.overlay_layer = value.overlay_layer || 0;
+		for(let vname of ['icon', 'icon_state', 'dir']) {
+			if(value.hasOwnProperty(vname)) {
+				overlay_renderer[vname] = value[vname];
+			} else {
+				overlay_renderer[vname] = this[vname];
+			}
+		}
+		this.overlay_renderers_list.sort((a,b) => {a.overlay_layer-b.overlay_layer;});
 	}
 
 	get_displacement(timestamp) {
 		var dispx = 0;
 		var dispy = 0;
-		if(this._appearance_vars.screen_loc_x) {
-			dispx = (32*this._appearance_vars.screen_loc_x);
-			dispy = 480-(32*this._appearance_vars.screen_loc_y)-32;
+		if(this.screen_loc_x) {
+			dispx = (32*this.screen_loc_x);
+			dispy = 480-(32*this.screen_loc_y)-32;
 		} else {
 			var glidex = 0;
 			var glidey = 0;
@@ -129,8 +117,10 @@ class Atom {
 			return;
 		var glidex = this.glide.x;
 		var glidey = this.glide.y;
-		var glide_size = +this._appearance_vars.glide_size;
+		var glide_size = +this.glide_size;
 		if(glide_size != glide_size) glide_size = this.client.glide_size;
+		if(glide_size == 0)
+			this.glide = undefined;
 		var dist = Math.max(glide_size * (timestamp - this.glide.lasttime) / 1000,0);
 		this.glide.lasttime = timestamp;
 		if(Math.abs(glidex) < dist){glidex = 0;} else {glidex -= Math.sign(glidex) * dist;}
@@ -138,15 +128,101 @@ class Atom {
 		this.glide.x = glidex; this.glide.y = glidey;
 		if(glidex == 0 && glidey == 0) this.glide = undefined;
 	}
+
+	is_mouse_over(x, y) {
+		for(var overlay of this.overlay_renderers_list) {
+			if(overlay.is_mouse_over(x,y))
+				return true;
+		}
+		return this.main_icon_renderer.is_mouse_over(x,y);
+	}
+
+	on_render_tick(timestamp) {
+		for(var overlay of this.overlay_renderers_list) {
+			overlay.on_render_tick(timestamp);
+		}
+		return this.main_icon_renderer.on_render_tick(timestamp);
+	}
+
+	draw(ctx, timestamp) {
+		for(let overlay of this.overlay_renderers_list) {
+			overlay.draw(ctx, timestamp);
+		}
+		var i;
+		for(i = 0; i < this.overlay_renderers_list.length; i++) {
+			let overlay = this.overlay_renderers_list[i];
+			if(overlay.overlay_layer >= 0)
+				break;
+			overlay.draw(ctx, timestamp);
+		}
+		this.main_icon_renderer.draw(ctx, timestamp);
+		for(;i < this.overlay_renderers_list.length; i++) {
+			let overlay = this.overlay_renderers_list[i];
+			overlay.draw(ctx, timestamp);
+		}
+	}
+
+	get_bounds() {
+		var bounds = this.main_icon_renderer.get_bounds();
+		for(var overlay of this.overlay_renderers_list) {
+			var overlay_bounds = overlay.get_bounds();
+			if(!overlay_bounds)
+				continue;
+			if(overlay_bounds.x < bounds.x) {
+				bounds.x += bounds.x - overlay_bounds.x;
+				bounds.x = overlay_bounds.x;
+			}
+			if(overlay_bounds.y < bounds.y) {
+				bounds.y += bounds.y - overlay_bounds.y;
+				bounds.y = overlay_bounds.y;
+			}
+			bounds.width = Math.max(bounds.width, overlay_bounds.width);
+			bounds.height = Math.max(bounds.width, overlay_bounds.height);
+		}
+		return bounds;
+	}
+
+	get icon() {return this.main_icon_renderer.icon;}
+	set icon(val) {
+		this.main_icon_renderer.icon = val;
+		for(var key in this.overlays) {
+			if(!this.overlays.hasOwnProperty(key))
+				continue;
+			var overlay = this.overlays[key];
+			if(!overlay.hasOwnProperty('icon'))
+				this.overlay_renderers[key].icon = val;
+		}
+	}
+
+	get icon_state() {return this.main_icon_renderer.icon_state;}
+	set icon_state(val) {
+		this.main_icon_renderer.icon_state = val;
+		for(var key in this.overlays) {
+			if(!this.overlays.hasOwnProperty(key))
+				continue;
+			var overlay = this.overlays[key];
+			if(!overlay.hasOwnProperty('icon_state'))
+				this.overlay_renderers[key].icon_state = val;
+		}
+	}
+
+	get dir() {return this.main_icon_renderer.dir;}
+	set dir(val) {
+		this.main_icon_renderer.dir = val;
+		for(var key in this.overlays) {
+			if(!this.overlays.hasOwnProperty(key))
+				continue;
+			var overlay = this.overlays[key];
+			if(!overlay.hasOwnProperty('dir'))
+				this.overlay_renderers[key].dir = val;
+		}
+	}
 }
 
 Atom.atom_comparator = function(a, b) {
-	var comparison = a._appearance_vars.layer - b._appearance_vars.layer;
-	if(comparison == 0) {
-		var [aol, bol] = [a._appearance_vars.overlay_layer, b._appearance_vars.overlay_layer];
-		[aol, bol] = [aol == undefined ? 0 : aol, bol == undefined ? 0 : bol];
-		comparison = aol-bol;
-	}
+	var comparison = a.layer - b.layer;
+	if(comparison == 0)
+		comparison = b.y - a.y;
 	return comparison;
 };
 

@@ -182,6 +182,15 @@ class Atom {
 		return bounds;
 	}
 
+	fully_load() {
+		var promises = [];
+		promises.push(this.main_icon_renderer.fully_load());
+		for(var overlay of this.overlay_renderers_list) {
+			promises.push(overlay.fully_load());
+		}
+		return Promise.all(promises);
+	}
+
 	get icon() {return this.main_icon_renderer.icon;}
 	set icon(val) {
 		this.main_icon_renderer.icon = val;

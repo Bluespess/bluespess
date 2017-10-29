@@ -6,9 +6,14 @@ const IconRenderer = require('./lib/icon_renderer.js');
 const PanelManager = require('./lib/panels/manager.js');
 const Panel = require('./lib/panels/panel.js');
 const Component = require('./lib/component.js');
+const EventEmitter = require('events');
 
-class BluespessClient {
+class BluespessClient extends EventEmitter {
 	constructor(wsurl, resRoot = "") {
+		super();
+		this.components = {};
+		this.importModule(require('./lib/lighting.js'));
+
 		if(!wsurl)
 			wsurl = "ws" + window.location.origin.substring(4);
 		this.resRoot = resRoot;
@@ -20,7 +25,6 @@ class BluespessClient {
 		this.glide_size = 10;
 		this.icon_meta_load_queue = {};
 		this.icon_metas = {};
-		this.components = {};
 	}
 
 	login() {
@@ -52,6 +56,9 @@ class BluespessClient {
 					this.components[componentName] = mod.components[componentName];
 				}
 			}
+		}
+		if(mod.now instanceof Function) {
+			mod.now(this);
 		}
 	}
 
@@ -141,7 +148,7 @@ class BluespessClient {
 			var localX = (clickX - dispx)/32;
 			var localY = 1-(clickY - dispy)/32;
 			var bounds = atom.get_bounds();
-			if(localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height && atom.is_mouse_over(localX, localY, performance.now())) {
+			if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height && atom.is_mouse_over(localX, localY, performance.now())) {
 				clickedAtom = atom;
 				break;
 			}

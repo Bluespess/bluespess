@@ -229,6 +229,12 @@ class Atom {
 }
 
 Atom.atom_comparator = function(a, b) {
+	if(!a && !b)
+		return 0;
+	if(!a)
+		return 1;
+	if(!b)
+		return -1;
 	var comparison = a.layer - b.layer;
 	if(comparison == 0)
 		comparison = b.y - a.y;

@@ -1,7 +1,8 @@
 'use strict';
 function anim_loop(timestamp) {
 	var ctx = document.getElementById('mainlayer').getContext('2d');
-	ctx.clearRect(0,0,480,480);
+	ctx.fillStyle = "black";
+	ctx.fillRect(0,0,480,480);
 	for(var i = 0; i < this.atoms.length; i++) {
 		var atom = this.atoms[i];
 		if(atom) {
@@ -14,6 +15,7 @@ function anim_loop(timestamp) {
 		}
 	}
 
+	this.emit("after_draw", ctx);
 
 	requestAnimationFrame(anim_loop.bind(this));
 }

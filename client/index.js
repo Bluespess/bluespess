@@ -11,9 +11,6 @@ const EventEmitter = require('events');
 class BluespessClient extends EventEmitter {
 	constructor(wsurl, resRoot = "") {
 		super();
-		this.components = {};
-		this.importModule(require('./lib/lighting.js'));
-
 		if(!wsurl)
 			wsurl = "ws" + window.location.origin.substring(4);
 		this.resRoot = resRoot;
@@ -25,6 +22,8 @@ class BluespessClient extends EventEmitter {
 		this.glide_size = 10;
 		this.icon_meta_load_queue = {};
 		this.icon_metas = {};
+		this.components = {};
+		this.importModule(require('./lib/lighting.js'));
 	}
 
 	login() {
@@ -102,7 +101,7 @@ class BluespessClient extends EventEmitter {
 						for(let key in inst.components[component_name]) {
 							if(!inst.components[component_name].hasOwnProperty(key))
 								continue;
-							this.components[component_name][key] = inst.components[component_name][key];
+							atom.components[component_name][key] = inst.components[component_name][key];
 						}
 					}
 				}

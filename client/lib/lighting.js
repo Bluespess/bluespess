@@ -1,5 +1,6 @@
 'use strict';
 const {chain_func, Component} = require('../index.js');
+const Atom = require('./atom.js');
 
 var buffer_canvas = document.createElement("canvas");
 
@@ -7,14 +8,12 @@ class LightingObject extends Component {
 	constructor(atom, template) {
 		super(atom, template);
 		this.atom.draw = chain_func(this.atom.draw, this.draw.bind(this));
-		this.atom.is_mouse_over = ()=>{return true;};
-		this.atom.get_bounds = ()=>{return {x:0,y:0,width:1,height:1};};
+		this.atom.is_mouse_over = ()=>{return false;};
+		console.log(this);
 	}
 
 	draw(prev, ctx, timestamp) {
-		prev();
-
-		if(this.atom.screen_loc_x != null)
+		if(this.atom.screen_loc_x != null || this.radius !== +this.radius || !this.on)
 			return;
 
 		buffer_canvas.width = ctx.canvas.width;
@@ -33,7 +32,7 @@ class LightingObject extends Component {
 		bctx.fillStyle = gradient;
 		bctx.fillRect(-this.radius*32+dispx, -this.radius*32+dispy, this.radius*2*32+32, this.radius*2*32+32);
 
-		var walls = [];
+		/*var walls = [];
 		for(let i = 0; i < this.atom.client.atoms.length; i++) {
 			var atom = this.atom.client.atoms[i];
 			if(atom.opacity) {
@@ -53,13 +52,31 @@ class LightingObject extends Component {
 				wall.dist = hdist + vdist;
 				walls.push(wall);
 			}
+		}*/
+		var wall_offset_x = -16 - (this.atom.x+(this.atom.glide?this.atom.glide.x:0))*32;
+		var wall_offset_y = 16 + (this.atom.y+(this.atom.glide?this.atom.glide.y:0))*32;
+		var walls = [];
+		for(var shadow of this.shadows_list){
+			let wall = {};
+			wall.x1 = shadow.x1 * 32 + wall_offset_x;
+			wall.y1 = -shadow.y2 * 32 + wall_offset_y;
+			wall.x2 = shadow.x2 * 32 + wall_offset_x;
+			wall.y2 = -shadow.y1 * 32 + wall_offset_y;
+			wall.base_width = wall.x2 - wall.x1;
+			wall.base_height = wall.y2 - wall.y1;
+			if(wall.x1 < 0 && wall.y1 < 0 && wall.x2 > 0 && wall.y2 > 0)
+				continue;
+			let hdist = Math.min(Math.abs(wall.x1), Math.abs(wall.x2));
+			let vdist = Math.min(Math.abs(wall.y1), Math.abs(wall.y2));
+			if(wall.x1 <= 0 && wall.x2 >= 0) hdist = 0;
+			if(wall.y1 <= 0 && wall.y2 >= 0) vdist = 0;
+			wall.dist = hdist + vdist;
+			walls.push(wall);
 		}
-
 
 		walls.sort((a,b) => {
 			return a.dist - b.dist;
 		});
-
 
 		for(let i = 0; i < walls.length; i++) {
 			var wall1 = walls[i];
@@ -150,7 +167,6 @@ class LightingObject extends Component {
 			}
 		}
 
-
 		var lctx = this.atom.client.lighting_canvas.getContext('2d');
 		lctx.globalCompositeOperation = "lighter";
 		lctx.drawImage(buffer_canvas,0,0);
@@ -168,9 +184,9 @@ function overlay_lighting_layer(ctx) {
 	// draw the night vision area
 	var lctx = this.lighting_canvas.getContext('2d');
 
-	var gradient = lctx.createRadialGradient(240,240,0,240,240,32);
+	var gradient = lctx.createRadialGradient(240,240,0,240,240,48);
 	gradient.addColorStop(0, "#444");
-	gradient.addColorStop(0.7, "#444");
+	gradient.addColorStop(0.6, "#444");
 	gradient.addColorStop(1, 'black');
 	lctx.fillStyle = gradient;
 	lctx.globalCompositeOperation = "lighten";
@@ -189,7 +205,11 @@ module.exports.now = function now(client) {
 	client.lighting_canvas = document.createElement("canvas");
 	client.lighting_canvas.width = 480;
 	client.lighting_canvas.height = 480;
-	client.on("after_draw", overlay_lighting_layer.bind(client));
+	var lighting_atom = new Atom(client, {});
+	lighting_atom.layer = 20;
+	lighting_atom.draw = overlay_lighting_layer.bind(client);
+	lighting_atom.get_displacement = ()=>{return {dispx:0,dispy:0};};
+	//client.on("after_draw", overlay_lighting_layer.bind(client));
 };
 
 module.exports.components = {LightingObject, LightingTile};

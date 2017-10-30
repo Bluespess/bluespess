@@ -3,6 +3,9 @@ function anim_loop(timestamp) {
 	var ctx = document.getElementById('mainlayer').getContext('2d');
 	ctx.fillStyle = "black";
 	ctx.fillRect(0,0,480,480);
+
+	this.emit("before_draw", ctx, timestamp);
+
 	for(var i = 0; i < this.atoms.length; i++) {
 		var atom = this.atoms[i];
 		if(atom) {
@@ -15,7 +18,7 @@ function anim_loop(timestamp) {
 		}
 	}
 
-	this.emit("after_draw", ctx);
+	this.emit("after_draw", ctx, timestamp);
 
 	requestAnimationFrame(anim_loop.bind(this));
 }

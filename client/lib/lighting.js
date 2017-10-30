@@ -26,6 +26,8 @@ class LightingObject extends Component {
 		var {dispx, dispy} = this.atom.get_displacement(timestamp);
 		var cx = dispx+16;
 		var cy = dispy+16;
+		if(cx !== +cx || cy !== +cy)
+			return;
 		var gradient = bctx.createRadialGradient(cx,cy,0,cx,cy,16+(this.radius*32));
 		gradient.addColorStop(0, this.color);
 		gradient.addColorStop(1, 'black');
@@ -180,7 +182,7 @@ class LightingTile extends Component {
 	}
 }
 
-function overlay_lighting_layer(ctx) {
+function overlay_lighting_layer(ctx, timestamp) {
 	// draw the night vision area
 	var lctx = this.lighting_canvas.getContext('2d');
 
@@ -193,9 +195,21 @@ function overlay_lighting_layer(ctx) {
 	lctx.fillRect(192, 192, 288, 288);
 	lctx.globalCompositeOperation = "source-over";
 
+	ctx.save();
+	var path = new Path2D();
+	for(var atom of this.atoms) {
+		if (atom && atom.components && atom.components.LightingTile) {
+			let {dispx, dispy} = atom.get_displacement(timestamp);
+			path.rect(dispx, dispy, 32, 32);
+		}
+	}
+	ctx.clip(path);
+
 	ctx.globalCompositeOperation = "multiply";
 	ctx.drawImage(this.lighting_canvas, 0, 0);
 	ctx.globalCompositeOperation = "source-over";
+
+	ctx.restore();
 
 	lctx.fillStyle = "#000000";
 	lctx.fillRect(0,0,480,480);
@@ -209,7 +223,6 @@ module.exports.now = function now(client) {
 	lighting_atom.layer = 20;
 	lighting_atom.draw = overlay_lighting_layer.bind(client);
 	lighting_atom.get_displacement = ()=>{return {dispx:0,dispy:0};};
-	//client.on("after_draw", overlay_lighting_layer.bind(client));
 };
 
 module.exports.components = {LightingObject, LightingTile};

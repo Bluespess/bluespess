@@ -17,6 +17,7 @@ class BluespessClient extends EventEmitter {
 		this.wsurl = wsurl;
 		this.atoms_by_netid = {};
 		this.atoms = [];
+		this.visible_tiles = new Set();
 		this.dirty_atoms = [];
 		this.eyes = {"":{x:0,y:0}};
 		this.glide_size = 10;
@@ -112,6 +113,16 @@ class BluespessClient extends EventEmitter {
 				let atom = this.atoms_by_netid[obj.delete_atoms[i]];
 				if(!atom) continue;
 				atom.del();
+			}
+		}
+		if(obj.add_tiles) {
+			for(let tile of obj.add_tiles) {
+				this.visible_tiles.add(tile);
+			}
+		}
+		if(obj.remove_tiles) {
+			for(let tile of obj.remove_tiles) {
+				this.visible_tiles.delete(tile);
 			}
 		}
 		if(obj.eye) {

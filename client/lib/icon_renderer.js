@@ -22,14 +22,7 @@ class IconRenderer {
 	fully_load() {
 		if(this.icon_meta || !this.icon)
 			return Promise.resolve();
-		return new Promise((resolve, reject) => {
-			this.client.enqueue_icon_meta_load(this.icon, (err) => {
-				if(err)
-					reject(err);
-				else
-					resolve();
-			});
-		});
+		return this.client.enqueue_icon_meta_load(this.icon);
 	}
 
 	get_bounds() {
@@ -45,12 +38,12 @@ class IconRenderer {
 			if(this.icon_meta == undefined) {
 				this.change_level = CHANGE_LEVEL_NONE;
 				var enqueued_icon = this.icon;
-				this.atom.client.enqueue_icon_meta_load(this.icon, (err) => {
-					if(err)
-						console.error(err);
-					else if(this.icon == enqueued_icon) {
+				this.atom.client.enqueue_icon_meta_load(this.icon).then(()=>{
+					if(this.icon == enqueued_icon) {
 						this.change_level = CHANGE_LEVEL_ICON;
 					}
+				}).catch((err) => {
+					console.error(err);
 				});
 				this.change_level = CHANGE_LEVEL_NONE;
 				return;

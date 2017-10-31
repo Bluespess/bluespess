@@ -11,8 +11,5 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "monster860",
-  "license": "MIT",
-  "peerDependencies": {
-    "jquery": "^3.2.1"
-  }
+  "license": "MIT"
 }

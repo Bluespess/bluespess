@@ -1,6 +1,5 @@
 'use strict';
 
-const $ = require('jquery');
 const Atom = require('./lib/atom.js');
 const IconRenderer = require('./lib/icon_renderer.js');
 const PanelManager = require('./lib/panels/manager.js');
@@ -35,13 +34,11 @@ class BluespessClient extends EventEmitter {
 		this.connection.addEventListener('message', this.handleSocketMessage.bind(this));
 		this.connection.addEventListener('open', () => {this.connection.send(JSON.stringify({"login":"guest" + Math.floor(Math.random()*1000000)}));});
 		requestAnimationFrame(this.anim_loop.bind(this)); // Start the rendering loop
-		$(document).keydown((e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keydown":{which:e.which,id:e.target.id}}));});
-		$(document).keyup((e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keyup":{which:e.which,id:e.target.id}}));});
+		document.addEventListener('keydown', (e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keydown":{which:e.which,id:e.target.id}}));});
+		document.addEventListener('keyup', (e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keyup":{which:e.which,id:e.target.id}}));});
 		this.updateMapWindowSizes();
-		$(window).resize(this.updateMapWindowSizes);
-		$('#mainlayer').click(this.handleClick.bind(this));
-
-		new Panel(this.panel_manager, "testpanel", {width:400, height:400, title:"Test panel"});
+		window.addEventListener('resize', this.updateMapWindowSizes.bind(this));
+		document.getElementById('mainlayer').addEventListener("click", this.handleClick.bind(this));
 	}
 
 	importModule(mod) {
@@ -132,7 +129,9 @@ class BluespessClient extends EventEmitter {
 			}, 500);
 		}
 		if(obj.to_chat) {
-			$('#chatwindow').append('<div>'+obj.to_chat+'</div>');
+			var newdiv = document.createElement('div');
+			newdiv.innerHTML = obj.to_chat;
+			document.getElementById('chatwindow').appendChild(newdiv);
 		}
 		if(obj.panel) {
 			this.panel_manager.handle_message(obj.panel);
@@ -143,8 +142,9 @@ class BluespessClient extends EventEmitter {
 	}
 
 	updateMapWindowSizes() {
-		var minsize = Math.min($('#mapwindow-container').width(), $('#mapwindow-container').height());
-		$('#mapwindow').css("transform","scale("+(minsize/480)+")");
+		var mapwindow_container = document.getElementById("mapwindow-container");
+		var minsize = Math.min(mapwindow_container.clientWidth, mapwindow_container.clientHeight);
+		document.getElementById('mapwindow').style.transform = `scale(${minsize/480})`;
 	}
 
 	handleClick(e) {

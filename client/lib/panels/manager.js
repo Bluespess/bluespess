@@ -22,7 +22,7 @@ class PanelManager extends EventEmitter {
 				if(!obj.create.hasOwnProperty(id))
 					continue;
 				if(this.panels[id])
-					this.panels[id].close();
+					console.warn(`The server tried to open a panel with the same ID ${id} twice! ${JSON.stringify(obj.create[id])}`);
 				let panel = new Panel(this, id, obj.create[id]);
 				this.emit("create", panel, obj.create[id]);
 			}

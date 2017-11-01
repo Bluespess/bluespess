@@ -30,7 +30,7 @@ class BluespessClient extends EventEmitter {
 		if(global.is_bs_editor_env)
 			throw new Error("Client should not be started in editor mode");
 		this.connection = new WebSocket(this.wsurl);
-		this.panel_manager = new PanelManager();
+		this.panel_manager = new PanelManager(this);
 		this.connection.addEventListener('message', this.handleSocketMessage.bind(this));
 		this.connection.addEventListener('open', () => {this.connection.send(JSON.stringify({"login":"guest" + Math.floor(Math.random()*1000000)}));});
 		requestAnimationFrame(this.anim_loop.bind(this)); // Start the rendering loop
@@ -62,7 +62,7 @@ class BluespessClient extends EventEmitter {
 					}
 					if(mod.panel_classes[class_name].name != class_name)
 						throw new Error(`Panel class name mismatch! Named ${class_name} in map and constructor is named ${mod.panel_classes[class_name].name}`);
-					this.panel_clases[class_name] = mod.panel_classes[class_name];
+					this.panel_classes[class_name] = mod.panel_classes[class_name];
 				}
 			}
 		}

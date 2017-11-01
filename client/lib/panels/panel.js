@@ -6,28 +6,28 @@ class Panel extends EventEmitter {
 	constructor(manager, id, {width=400, height=400, title="", can_close=true, content_class}={}) {
 		super();
 		console.log(this);
-		var left = document.clientWidth / 2 - width / 2;
-		var top = document.clientHeight / 2 - height / 2;
-		this.containerObj = document.createElement('div');
-		Object.assign(this.containerObj.style, {width:width+"px", height:height+"px", left:left+"px", top:top+"px"});
-		this.containerObj.classList.add('uiframe-container');
-		this.panelObj = document.createElement('div');
-		this.panelObj.classList.add('uiframe');
-		this.headerObj = document.createElement('div');
-		this.headerObj.classList.add('uiframe-header');
-		this.titleNode = document.createTextNode(title);
-		this.headerObj.appendChild(this.titleNode);
-		this.contentObj = document.createElement('div');
-		this.contentObj.classList.add('uiframe-content');
-		this.panelObj.appendChild(this.headerObj);
-		this.panelObj.appendChild(this.contentObj);
-		this.containerObj.appendChild(this.panelObj);
-		document.getElementById('uiframes-container').appendChild(this.containerObj);
+		var left = document.documentElement.clientWidth / 2 - width / 2;
+		var top = document.documentElement.clientHeight / 2 - height / 2;
+		this.container_obj = document.createElement('div');
+		Object.assign(this.container_obj.style, {width:width+"px", height:height+"px", left:left+"px", top:top+"px"});
+		this.container_obj.classList.add('uiframe-container');
+		this.panel_obj = document.createElement('div');
+		this.panel_obj.classList.add('uiframe');
+		this.header_obj = document.createElement('div');
+		this.header_obj.classList.add('uiframe-header');
+		this.title_node = document.createTextNode(title);
+		this.header_obj.appendChild(this.title_node);
+		this.content_obj = document.createElement('div');
+		this.content_obj.classList.add('uiframe-content');
+		this.panel_obj.appendChild(this.header_obj);
+		this.panel_obj.appendChild(this.content_obj);
+		this.container_obj.appendChild(this.panel_obj);
+		document.getElementById('uiframes-container').appendChild(this.container_obj);
 
-		this.headerObj.addEventListener("mousedown", this._start_drag.bind(this));
-		this.containerObj.addEventListener("mousedown", this._start_resize.bind(this));
-		this.containerObj.addEventListener("mousemove", this._container_mousemove.bind(this));
-		this.containerObj.addEventListener("mouseout", this._container_mouseout.bind(this));
+		this.header_obj.addEventListener("mousedown", this._start_drag.bind(this));
+		this.container_obj.addEventListener("mousedown", this._start_resize.bind(this));
+		this.container_obj.addEventListener("mousemove", this._container_mousemove.bind(this));
+		this.container_obj.addEventListener("mouseout", this._container_mouseout.bind(this));
 
 		this.can_close = can_close;
 		this.manager = manager;
@@ -39,15 +39,17 @@ class Panel extends EventEmitter {
 			if(ctor)
 				this.content_controller = new ctor(this, this.manager);
 			else
-				console.warn(`${ctor} is a nonexistent panel class`);
+				console.warn(`${content_class} is a nonexistent panel class`);
 		}
 	}
 
 	_start_drag(e) {
-		if(e.target != this.headerObj) {
+		// bring the panel into focus
+		document.getElementById('uiframes-container').appendChild(this.container_obj);
+		if(e.target != this.header_obj) {
 			return;
 		}
-		var pad = (this.containerObj.offsetWidth - this.panelObj.offsetWidth)/2;
+		var pad = (this.container_obj.offsetWidth - this.panel_obj.offsetWidth)/2;
 		e.preventDefault();
 		var lastclientx = e.clientX;
 		var lastclienty = e.clientY;
@@ -56,8 +58,9 @@ class Panel extends EventEmitter {
 			var dy = e.clientY - lastclienty;
 			lastclientx = e.clientX;
 			lastclienty = e.clientY;
-			this.containerObj.style.left = Math.max(-pad,this.containerObj.getBoundingClientRect().left + dx) + "px";
-			this.containerObj.style.top = Math.max(-pad,this.containerObj.getBoundingClientRect().top + dy) + "px";
+			var {left:oldleft, top:oldtop} = this.container_obj.getBoundingClientRect();
+			this.container_obj.style.left = Math.min(document.documentElement.clientWidth-160-pad, Math.max(-pad,oldleft + dx)) + "px";
+			this.container_obj.style.top = Math.min(document.documentElement.clientHeight-35-pad, Math.max(-pad,oldtop + dy)) + "px";
 			this.emit("move");
 		};
 		var mouseup = () => {
@@ -69,11 +72,11 @@ class Panel extends EventEmitter {
 	}
 
 	_resize_meta(e) {
-		var pad = (this.containerObj.offsetWidth - this.panelObj.offsetWidth)/2;
-		var width = this.panelObj.offsetWidth;
-		var height = this.panelObj.offsetHeight;
+		var pad = (this.container_obj.offsetWidth - this.panel_obj.offsetWidth)/2;
+		var width = this.panel_obj.offsetWidth;
+		var height = this.panel_obj.offsetHeight;
 		var out = {drag_right: false, drag_left: false, drag_up: false, drag_down: false, cursor: "default"};
-		if(e.target == this.containerObj) {
+		if(e.target == this.container_obj) {
 			if(e.offsetX < pad)
 				out.drag_left = true;
 			if(e.offsetY < pad)
@@ -100,7 +103,7 @@ class Panel extends EventEmitter {
 		var resize_meta = this._resize_meta(e);
 		if(!resize_meta.can_resize)
 			return;
-		var pad = (this.containerObj.offsetWidth - this.panelObj.offsetWidth)/2;
+		var pad = (this.container_obj.offsetWidth - this.panel_obj.offsetWidth)/2;
 		e.preventDefault();
 		var lastclientx = e.clientX;
 		var lastclienty = e.clientY;
@@ -109,17 +112,18 @@ class Panel extends EventEmitter {
 			var dy = e.clientY - lastclienty;
 			lastclientx = e.clientX;
 			lastclienty = e.clientY;
+			var {left:oldleft, top:oldtop} = this.container_obj.getBoundingClientRect();
 			if(resize_meta.drag_left) {
-				this.containerObj.style.left = Math.max(-pad,this.containerObj.getBoundingClientRect().left + dx) + "px";
-				this.containerObj.style.width = Math.max(160,this.panelObj.clientWidth - dx) + "px";
+				this.container_obj.style.left = Math.min(document.documentElement.clientWidth-160-pad,Math.max(-pad,oldleft + dx)) + "px";
+				this.container_obj.style.width = Math.max(160,this.panel_obj.clientWidth - dx) + "px";
 			} else if(resize_meta.drag_right) {
-				this.containerObj.style.width = Math.max(160,this.panelObj.clientWidth + dx) + "px";
+				this.container_obj.style.width = Math.max(160,this.panel_obj.clientWidth + dx) + "px";
 			}
 			if(resize_meta.drag_up) {
-				this.containerObj.style.top = Math.max(-pad,this.containerObj.getBoundingClientRect().top + dy) + "px";
-				this.containerObj.style.height = Math.max(35,this.panelObj.clientHeight - dy) + "px";
+				this.container_obj.style.top = Math.min(document.documentElement.clientHeight-35-pad,Math.max(-pad,oldtop + dy)) + "px";
+				this.container_obj.style.height = Math.max(35,this.panel_obj.clientHeight - dy) + "px";
 			} else if(resize_meta.drag_down) {
-				this.containerObj.style.height = Math.max(35,this.panelObj.clientHeight + dy) + "px";
+				this.container_obj.style.height = Math.max(35,this.panel_obj.clientHeight + dy) + "px";
 			}
 			this.emit("resize");
 		};
@@ -133,25 +137,25 @@ class Panel extends EventEmitter {
 
 	_container_mousemove(e) {
 		var resize_meta = this._resize_meta(e);
-		this.containerObj.style.cursor = resize_meta.cursor;
+		this.container_obj.style.cursor = resize_meta.cursor;
 	}
 	_container_mouseout() {
-		this.containerObj.style.cursor = "default";
+		this.container_obj.style.cursor = "default";
 	}
 
 	get title() {
-		return this.titleNode.textContent;
+		return this.title_node.textContent;
 	}
 
 	set title(val) {
-		this.titleNode.textContent = val;
+		this.title_node.textContent = val;
 	}
 
 	close() {
-		this.manager.send_message({closed_panel:this.id});
+		this.manager.send_message({close:[this.id]});
 		if(this.manager.panels[this.id] == this)
 			this.manager.panels[this.id] = null;
-		document.getElementById('uiframes-container').removeChild(this.containerObj);
+		document.getElementById('uiframes-container').removeChild(this.container_obj);
 		this.emit("close");
 	}
 }

@@ -3,7 +3,6 @@
 const Atom = require('./lib/atom.js');
 const IconRenderer = require('./lib/icon_renderer.js');
 const PanelManager = require('./lib/panels/manager.js');
-const Panel = require('./lib/panels/panel.js');
 const Component = require('./lib/component.js');
 const EventEmitter = require('events');
 
@@ -23,6 +22,7 @@ class BluespessClient extends EventEmitter {
 		this.icon_meta_load_queue = {};
 		this.icon_metas = {};
 		this.components = {};
+		this.panel_classes = {};
 		this.importModule(require('./lib/lighting.js'));
 	}
 
@@ -51,6 +51,18 @@ class BluespessClient extends EventEmitter {
 					if(mod.components[componentName].name != componentName)
 						throw new Error(`Component name mismatch! Named ${componentName} in map and constructor is named ${mod.components[componentName].name}`);
 					this.components[componentName] = mod.components[componentName];
+				}
+			}
+		}
+		if(mod.panel_classes) {
+			for(var class_name in mod.panel_classes) {
+				if(mod.panel_classes.hasOwnProperty(class_name)) {
+					if(this.panel_classes[class_name]) {
+						throw new Error(`Panel class ${class_name} already exists!`);
+					}
+					if(mod.panel_classes[class_name].name != class_name)
+						throw new Error(`Panel class name mismatch! Named ${class_name} in map and constructor is named ${mod.panel_classes[class_name].name}`);
+					this.panel_clases[class_name] = mod.panel_classes[class_name];
 				}
 			}
 		}

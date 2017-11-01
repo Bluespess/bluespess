@@ -1,9 +1,11 @@
 'use strict';
 
 const Panel = require('./panel.js');
+const EventEmitter = require('events');
 
-class PanelManager {
+class PanelManager extends EventEmitter {
 	constructor(client) {
+		super();
 		this.client = client;
 		this.panels = {};
 	}
@@ -15,13 +17,30 @@ class PanelManager {
 	}
 
 	handle_message(obj) {
-		if(obj.create_panel) {
-			for(let id in obj.create_panel) {
-				if(!obj.create_panel.hasOwnProperty(id))
+		if(obj.create) {
+			for(let id in obj.create) {
+				if(!obj.create.hasOwnProperty(id))
 					continue;
 				if(this.panels[id])
 					this.panels[id].close();
-				new Panel(this, id, obj.create_panel[id]);
+				let panel = new Panel(this, id, obj.create[id]);
+				this.emit("create", panel, obj.create[id]);
+			}
+		}
+		if(obj.message) {
+			for(let message of obj.message) {
+				let panel = this.panels[message.id];
+				if(!panel)
+					continue;
+				panel.emit("message", message.contents);
+			}
+		}
+		if(obj.close) {
+			for(let id of obj.close) {
+				let panel = this.panels[id];
+				if(!panel)
+					continue;
+				panel.close();
 			}
 		}
 	}

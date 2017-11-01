@@ -1,7 +1,10 @@
 'use strict';
 
-class Panel {
-	constructor(manager, id, {width=400, height=400, title="", can_close=true}={}) {
+const EventEmitter = require('events');
+
+class Panel extends EventEmitter {
+	constructor(manager, id, {width=400, height=400, title="", can_close=true, content_class}={}) {
+		super();
 		console.log(this);
 		var left = document.clientWidth / 2 - width / 2;
 		var top = document.clientHeight / 2 - height / 2;
@@ -30,6 +33,14 @@ class Panel {
 		this.manager = manager;
 		manager.panels[id] = this;
 		this.id = id;
+
+		if(content_class) {
+			let ctor = manager.client.panel_classes[content_class];
+			if(ctor)
+				this.content_controller = new ctor(this, this.manager);
+			else
+				console.warn(`${ctor} is a nonexistent panel class`);
+		}
 	}
 
 	_start_drag(e) {
@@ -47,6 +58,7 @@ class Panel {
 			lastclienty = e.clientY;
 			this.containerObj.style.left = Math.max(-pad,this.containerObj.getBoundingClientRect().left + dx) + "px";
 			this.containerObj.style.top = Math.max(-pad,this.containerObj.getBoundingClientRect().top + dy) + "px";
+			this.emit("move");
 		};
 		var mouseup = () => {
 			document.removeEventListener("mousemove", mousemove);
@@ -109,6 +121,7 @@ class Panel {
 			} else if(resize_meta.drag_down) {
 				this.containerObj.style.height = Math.max(35,this.panelObj.clientHeight + dy) + "px";
 			}
+			this.emit("resize");
 		};
 		var mouseup = () => {
 			document.removeEventListener("mousemove", mousemove);
@@ -139,6 +152,7 @@ class Panel {
 		if(this.manager.panels[this.id] == this)
 			this.manager.panels[this.id] = null;
 		document.getElementById('uiframes-container').removeChild(this.containerObj);
+		this.emit("close");
 	}
 }
 

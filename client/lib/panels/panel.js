@@ -28,6 +28,7 @@ class Panel extends EventEmitter {
 		this.container_obj.addEventListener("mousedown", this._start_resize.bind(this));
 		this.container_obj.addEventListener("mousemove", this._container_mousemove.bind(this));
 		this.container_obj.addEventListener("mouseout", this._container_mouseout.bind(this));
+		this.content_obj.addEventListener("click", this.click.bind(this));
 
 		this.can_close = can_close;
 		this.manager = manager;
@@ -151,12 +152,38 @@ class Panel extends EventEmitter {
 		this.title_node.textContent = val;
 	}
 
+	send_message(message) {
+		this.manager.send_message({message: [{id: this.id, contents: message}]});
+	}
+
 	close() {
 		this.manager.send_message({close:[this.id]});
 		if(this.manager.panels[this.id] == this)
 			this.manager.panels[this.id] = null;
 		document.getElementById('uiframes-container').removeChild(this.container_obj);
 		this.emit("close");
+	}
+
+	click(e) {
+		var target = e.target.closest(".button");
+		if(this.is_valid_button(target)) {
+			if(target.dataset.message) {
+				this.send_message(JSON.parse(target.dataset.message));
+			}
+			if(target.dataset.radioGroup) {
+				for(let selected of this.content_obj.querySelectorAll(`.button.selected[data-radio-group='${target.dataset.radioGroup}']`)) {
+					selected.classList.remove("selected");
+				}
+				target.classList.add("selected");
+				if(target.dataset.radioValue) {
+					this.send_message({[target.dataset.radioGroup]:target.dataset.radioValue});
+				}
+			}
+		}
+	}
+
+	is_valid_button(elem) {
+		return elem.classList.contains("button") && !elem.classList.contains("disabled") && !elem.classList.contains("selected");
 	}
 }
 

@@ -9,7 +9,6 @@ class LightingObject extends Component {
 		super(atom, template);
 		this.atom.draw = chain_func(this.atom.draw, this.draw.bind(this));
 		this.atom.is_mouse_over = ()=>{return false;};
-		console.log(this);
 	}
 
 	draw(prev, ctx, timestamp) {
@@ -195,15 +194,18 @@ function overlay_lighting_layer(ctx, timestamp) {
 	lctx.fillRect(192, 192, 288, 288);
 	lctx.globalCompositeOperation = "source-over";
 
-	ctx.save();
-	var path = new Path2D();
+	lctx.save();
+	lctx.beginPath();
+	lctx.rect(0,0,480,480);
 	for(var atom of this.atoms) {
 		if (atom && atom.components && atom.components.LightingTile) {
 			let {dispx, dispy} = atom.get_displacement(timestamp);
-			path.rect(dispx, dispy, 32, 32);
+			lctx.rect(dispx, dispy, 32, 32);
 		}
 	}
-	ctx.clip(path);
+	lctx.clip("evenodd");
+	lctx.clearRect(0,0,480,480);
+	lctx.restore();
 
 	ctx.globalCompositeOperation = "multiply";
 	ctx.drawImage(this.lighting_canvas, 0, 0);

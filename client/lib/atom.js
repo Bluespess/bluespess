@@ -39,7 +39,8 @@ class Atom {
 				console.warn(`Server passed an unknown networked component '${component_name}'! Yell at the devs of your server.`);
 				continue;
 			}
-			this.components[component_name] = new (client.components[component_name])(this, instobj.component_vars ? instobj.component_vars[component_name] : {});
+			var ctor = client.components[component_name];
+			this.components[component_name] = new ctor(this, instobj.component_vars ? instobj.component_vars[component_name] : {});
 		}
 	}
 
@@ -47,6 +48,9 @@ class Atom {
 		this.is_destroyed = true;
 		this.client.atoms.splice(this.client.atoms.indexOf(this), 1);
 		delete this.client.atoms_by_netid[this.network_id];
+		for(var component of Object.values(this.components)) {
+			component.destroy();
+		}
 	}
 
 	mark_dirty() {
@@ -73,6 +77,7 @@ class Atom {
 			overlay_renderer = new IconRenderer(this);
 			this.overlay_renderers_list.push(overlay_renderer);
 			this.overlay_renderers[key] = overlay_renderer;
+			overlay_renderer.parent = this.main_icon_renderer;
 		} else if(this.overlays[key] && value) {
 			overlay_renderer = this.overlay_renderers[key];
 			this.overlays[key] = value;
@@ -80,13 +85,8 @@ class Atom {
 			return;
 		}
 		overlay_renderer.overlay_layer = value.overlay_layer || 0;
-		for(let vname of ['icon', 'icon_state', 'dir']) {
-			if(value.hasOwnProperty(vname)) {
-				overlay_renderer[vname] = value[vname];
-			} else {
-				overlay_renderer[vname] = this[vname];
-			}
-		}
+		for(var prop of ['icon', 'icon_state', 'dir'])
+			overlay_renderer[prop] = value[prop];
 		this.overlay_renderers_list.sort((a,b) => {a.overlay_layer-b.overlay_layer;});
 	}
 
@@ -119,8 +119,10 @@ class Atom {
 		var glidey = this.glide.y;
 		var glide_size = +this.glide_size;
 		if(glide_size != glide_size) glide_size = this.client.glide_size;
-		if(glide_size == 0)
-			this.glide = undefined;
+		if(glide_size != glide_size || glide_size == 0) {
+			this.glide = null;
+			return;
+		}
 		var dist = Math.max(glide_size * (timestamp - this.glide.lasttime) / 1000,0);
 		this.glide.lasttime = timestamp;
 		if(Math.abs(glidex) < dist){glidex = 0;} else {glidex -= Math.sign(glidex) * dist;}
@@ -194,37 +196,44 @@ class Atom {
 	get icon() {return this.main_icon_renderer.icon;}
 	set icon(val) {
 		this.main_icon_renderer.icon = val;
-		for(var key in this.overlays) {
-			if(!this.overlays.hasOwnProperty(key))
-				continue;
-			var overlay = this.overlays[key];
-			if(!overlay.hasOwnProperty('icon'))
-				this.overlay_renderers[key].icon = val;
-		}
 	}
 
 	get icon_state() {return this.main_icon_renderer.icon_state;}
 	set icon_state(val) {
 		this.main_icon_renderer.icon_state = val;
-		for(var key in this.overlays) {
-			if(!this.overlays.hasOwnProperty(key))
-				continue;
-			var overlay = this.overlays[key];
-			if(!overlay.hasOwnProperty('icon_state'))
-				this.overlay_renderers[key].icon_state = val;
-		}
 	}
 
 	get dir() {return this.main_icon_renderer.dir;}
 	set dir(val) {
 		this.main_icon_renderer.dir = val;
-		for(var key in this.overlays) {
-			if(!this.overlays.hasOwnProperty(key))
-				continue;
-			var overlay = this.overlays[key];
-			if(!overlay.hasOwnProperty('dir'))
-				this.overlay_renderers[key].dir = val;
+	}
+
+	get flick() {
+		return this.main_icon_renderer.flick;
+	}
+	set flick(val) {
+		for(var overlay_renderer of this.overlay_renderers_list)
+			overlay_renderer.flick = null;
+		this.main_icon_renderer.flick = val;
+		if(val.overlays) {
+			for(var key in val.overlays) {
+				if(!this.overlay_renderers.hasOwnProperty(key))
+					continue;
+				var overlay_flick = val.overlays[key];
+				this.overlay_renderers[key].flick = overlay_flick;
+				for(var prop of ['icon', 'icon_state', 'dir', 'time_begin'])
+					if(!overlay_flick[prop])
+						overlay_flick[prop] = val[prop];
+			}
 		}
+	}
+
+	get c() {
+		return this.components;
+	}
+
+	dist(atom) {
+		
 	}
 }
 

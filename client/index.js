@@ -23,6 +23,7 @@ class BluespessClient extends EventEmitter {
 		this.icon_metas = {};
 		this.components = {};
 		this.panel_classes = {};
+		this.server_time_to_client;
 		this.importModule(require('./lib/lighting.js'));
 	}
 
@@ -124,6 +125,9 @@ class BluespessClient extends EventEmitter {
 				atom.del();
 			}
 		}
+		if(obj.timestamp) {
+			this.server_time_to_client = performance.now() - obj.timestamp;
+		}
 		if(obj.add_tiles) {
 			for(let tile of obj.add_tiles) {
 				this.visible_tiles.add(tile);
@@ -135,7 +139,6 @@ class BluespessClient extends EventEmitter {
 			}
 		}
 		if(obj.eye) {
-			console.log(obj.eye[""]);
 			setTimeout(() => {
 				this.eyes[""] = this.atoms_by_netid[obj.eye[""]];
 			}, 500);

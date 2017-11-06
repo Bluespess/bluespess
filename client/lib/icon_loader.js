@@ -15,20 +15,18 @@ function enqueue_icon_meta_load(newIcon) {
 					continue;
 				}
 				var state = meta[statekey];
-				var totalDelays = {};
 				for(var dir in state.dirs) {
 					if(!state.dirs.hasOwnProperty(dir)) {
 						continue;
 					}
-					var totalDelay = 0;
-					var frames = state.dirs[dir];
-					for(var i = 0; i < frames.length; i++) {
-						var frame = frames[i];
-						totalDelay += frame.delay;
+					var total_delay = 0;
+					var dir_meta = state.dirs[dir];
+					for(var i = 0; i < dir_meta.frames.length; i++) {
+						var frame = dir_meta.frames[i];
+						total_delay += frame.delay;
 					}
-					totalDelays[dir] = totalDelay;
+					dir_meta.total_delay = total_delay;
 				}
-				state.totalDelays = totalDelays;
 			}
 			meta.__image_object = new Image();
 			meta.__image_object.src = this.resRoot+newIcon;

@@ -7,6 +7,14 @@ class Component {
 		}
 		Object.defineProperty(this, 'atom', {enumerable: false, configurable: false, writable: false, value: atom});
 	}
+
+	get a() {
+		return this.atom;
+	}
+
+	destroy() {
+
+	}
 }
 
 module.exports = Component;

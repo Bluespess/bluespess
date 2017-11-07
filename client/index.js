@@ -144,9 +144,11 @@ class BluespessClient extends EventEmitter {
 			}, 500);
 		}
 		if(obj.to_chat) {
-			var newdiv = document.createElement('div');
-			newdiv.innerHTML = obj.to_chat;
-			document.getElementById('chatwindow').appendChild(newdiv);
+			for(let item of obj.to_chat) {
+				var newdiv = document.createElement('div');
+				newdiv.innerHTML = item;
+				document.getElementById('chatwindow').appendChild(newdiv);
+			}
 		}
 		if(obj.panel) {
 			this.panel_manager.handle_message(obj.panel);

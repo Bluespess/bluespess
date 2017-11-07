@@ -131,6 +131,8 @@ class IconRenderer {
 		var pxx = Math.floor(x*32);
 		var pxy = Math.floor(32-y*32);
 		var frame_meta = this.dir_meta.frames[this.icon_frame >= 0 && this.icon_frame < this.dir_meta.frames.length ? this.icon_frame : 0];
+		if(pxx < 0 || pxy < 0 || pxx > this.icon_state_meta.width || pxy > this.icon_state_meta.height)
+			return false;
 		var idx = 3+4*((pxx+frame_meta.x)+((pxy+frame_meta.y)*this.icon_meta.__image_data.width));
 		return this.icon_meta.__image_data.data[idx] > 0;
 	}

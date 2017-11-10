@@ -39,7 +39,7 @@ class BluespessClient extends EventEmitter {
 		document.addEventListener('keyup', (e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keyup":{which:e.which,id:e.target.id}}));});
 		this.updateMapWindowSizes();
 		window.addEventListener('resize', this.updateMapWindowSizes.bind(this));
-		document.getElementById('mainlayer').addEventListener("click", this.handleClick.bind(this));
+		document.getElementById('mainlayer').addEventListener("mousedown", this.handle_mousedown.bind(this));
 	}
 
 	importModule(mod) {
@@ -164,7 +164,7 @@ class BluespessClient extends EventEmitter {
 		document.getElementById('mapwindow').style.transform = `scale(${minsize/480})`;
 	}
 
-	handleClick(e) {
+	get_mouse_target(e) {
 		var clickX = e.offsetX;
 		var clickY = e.offsetY;
 		// Iterate through the atoms from top to bottom.
@@ -182,7 +182,32 @@ class BluespessClient extends EventEmitter {
 		}
 		if(!clickedAtom)
 			return;
-		this.connection.send(JSON.stringify({"click_on":{"atom":clickedAtom.network_id,"x":localX,"y":localY, "ctrlKey": e.ctrlKey, "shiftKey": e.shiftKey, "altKey": e.altKey}}));
+		return {"atom":clickedAtom,"x":localX,"y":localY, "ctrlKey": e.ctrlKey, "shiftKey": e.shiftKey, "altKey": e.altKey, "button": e.button};
+	}
+
+	handle_mousedown(e) {
+		var start_meta = this.get_mouse_target(e);
+		var start_time = performance.now();
+		var mouseup = (e2) => {
+			if(e2.button != e.button)
+				return;
+			document.removeEventListener("mouseup", mouseup);
+			var end_time = performance.now();
+			var end_meta = this.get_mouse_target(e2);
+			console.log(end_time - start_time);
+			if(end_time - start_time < 200 || end_meta.atom == start_meta.atom) {
+				if(this.connection)
+					this.connection.send(JSON.stringify({"click_on":Object.assign({}, start_meta, {atom: start_meta.atom.network_id})}));
+				return;
+			}
+			this.connection.send(JSON.stringify({
+				"drag": {
+					from: Object.assign({}, start_meta, {atom: start_meta.atom.network_id}),
+					to: Object.assign({}, end_meta, {atom: end_meta.atom.network_id})
+				}
+			}));
+		};
+		document.addEventListener("mouseup", mouseup);
 	}
 }
 

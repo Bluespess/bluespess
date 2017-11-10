@@ -145,7 +145,7 @@ class BluespessClient extends EventEmitter {
 		}
 		if(obj.to_chat) {
 			for(let item of obj.to_chat) {
-				var newdiv = document.createElement('div');
+				let newdiv = document.createElement('div');
 				newdiv.innerHTML = item;
 				document.getElementById('chatwindow').appendChild(newdiv);
 			}

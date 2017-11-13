@@ -246,7 +246,7 @@ Atom.atom_comparator = function(a, b) {
 	if(comparison == 0)
 		if(a.network_id > b.network_id)
 			comparison = 1;
-		else if(a.nework_id < b.network_id)
+		else if(a.network_id < b.network_id)
 			comparison = -1;
 	return comparison;
 };

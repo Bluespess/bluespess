@@ -24,6 +24,10 @@ class BluespessClient extends EventEmitter {
 		this.components = {};
 		this.panel_classes = {};
 		this.server_time_to_client;
+		this.audio_buffers = new Map();
+		this.playing_sounds = new Map();
+		if(!global.is_bs_editor_env)
+			this.audio_ctx = new AudioContext();
 		this.importModule(require('./lib/lighting.js'));
 	}
 
@@ -96,7 +100,13 @@ class BluespessClient extends EventEmitter {
 					atom[key] = inst[key];
 				}
 				if((oldx != atom.x || oldy != atom.y) && Math.abs(Math.max(atom.x-oldx,atom.y-oldy)) <= 1.00001) {
-					atom.glide = {x:oldx-atom.x,y:oldy-atom.y,lasttime:performance.now()};
+					var pgx = (atom.glide && atom.glide.x) || 0;
+					if(Math.sign(pgx) == oldx-atom.x)
+						pgx = 0;
+					var pgy = (atom.glide && atom.glide.y) || 0;
+					if(Math.sign(pgy) == oldy-atom.y)
+						pgy = 0;
+					atom.glide = {x:oldx-atom.x+pgx,y:oldy-atom.y+pgy,lasttime:performance.now()};
 				}
 				if(inst.overlays) {
 					for(let key in inst.overlays) {
@@ -229,6 +239,7 @@ BluespessClient.chain_func = function(func1, func2) {
 
 BluespessClient.prototype.enqueue_icon_meta_load = require('./lib/icon_loader.js');
 BluespessClient.prototype.anim_loop = require('./lib/renderer.js');
+BluespessClient.prototype.get_audio_buffer = require('./lib/audio_loader.js');
 
 BluespessClient.Atom = Atom;
 BluespessClient.Component = Component;

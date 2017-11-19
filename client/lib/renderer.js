@@ -20,6 +20,10 @@ function anim_loop(timestamp) {
 
 	this.emit("after_draw", ctx, timestamp);
 
+	if(this.audio_ctx) {
+		this.audio_ctx.listener.setPosition(this.eyes[""].x, 0, -this.eyes[""].y);
+	}
+
 	requestAnimationFrame(anim_loop.bind(this));
 }
 

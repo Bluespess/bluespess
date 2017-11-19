@@ -5,6 +5,7 @@ const IconRenderer = require('./lib/icon_renderer.js');
 const PanelManager = require('./lib/panels/manager.js');
 const Component = require('./lib/component.js');
 const EventEmitter = require('events');
+const Sound = require('./lib/sound.js');
 
 class BluespessClient extends EventEmitter {
 	constructor(wsurl, resRoot = "") {
@@ -163,6 +164,21 @@ class BluespessClient extends EventEmitter {
 		if(obj.panel) {
 			this.panel_manager.handle_message(obj.panel);
 		}
+		if(obj.sound) {
+			if(obj.sound.play)
+				for(let sound of obj.sound.play) {
+					if(this.playing_sounds.get(sound.id))
+						continue;
+					new Sound(this, sound).start();
+				}
+			if(obj.sound.stop) {
+				for(let id of obj.sound.stop) {
+					let sound = this.playing_sounds.get(id);
+					if(sound)
+						sound.stop();
+				}
+			}
+		}
 		this.atoms.sort(Atom.atom_comparator);
 
 		return obj;
@@ -244,5 +260,6 @@ BluespessClient.prototype.get_audio_buffer = require('./lib/audio_loader.js');
 BluespessClient.Atom = Atom;
 BluespessClient.Component = Component;
 BluespessClient.IconRenderer = IconRenderer;
+BluespessClient.Sound = Sound;
 
 module.exports = BluespessClient;

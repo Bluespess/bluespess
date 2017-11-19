@@ -9,6 +9,9 @@ class Atom {
 			instobj.y = 0;
 		this.client = client;
 		this.main_icon_renderer = new IconRenderer(this);
+		this.overlays = {};
+		this.overlay_renderers_list = [];
+		this.overlay_renderers = {};
 
 		for(let key in instobj) {
 			if(!instobj.hasOwnProperty(key))
@@ -17,6 +20,7 @@ class Atom {
 				continue;
 			this[key] = instobj[key];
 		}
+
 		this.is_destroyed = false;
 		this.client.atoms.push(this);
 		if(this.network_id) {
@@ -24,15 +28,14 @@ class Atom {
 		}
 
 		this.mark_dirty();
-		this.overlays = {};
-		this.overlay_renderers_list = [];
-		this.overlay_renderers = {};
+
 		if(instobj.overlays)
 			for(let key in instobj.overlays) {
 				if(!instobj.overlays.hasOwnProperty(key))
 					continue;
 				this.set_overlay(key, instobj.overlays[key]);
 			}
+
 		this.components = {};
 		for(var component_name of instobj.components || []) {
 			if(!client.components.hasOwnProperty(component_name)) {

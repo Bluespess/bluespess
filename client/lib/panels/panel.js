@@ -183,7 +183,7 @@ class Panel extends EventEmitter {
 	}
 
 	is_valid_button(elem) {
-		return elem.classList.contains("button") && !elem.classList.contains("disabled") && !elem.classList.contains("selected");
+		return elem && elem.classList && elem.classList.contains("button") && !elem.classList.contains("disabled") && !elem.classList.contains("selected");
 	}
 }
 

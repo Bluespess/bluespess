@@ -35,6 +35,20 @@ class Panel extends EventEmitter {
 		manager.panels[id] = this;
 		this.id = id;
 
+		if(can_close) {
+			this.close_button = document.createElement('div');
+			this.close_button.classList.add('uiframe-close-button');
+			this.header_obj.appendChild(this.close_button);
+
+			this.close_button.addEventListener("click", () => {
+				this.close();
+			});
+			this.close_button.addEventListener("mousedown", (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+			});
+		}
+
 		if(content_class) {
 			let ctor = manager.client.panel_classes[content_class];
 			if(ctor)

@@ -42,8 +42,6 @@ class BluespessClient extends EventEmitter {
 		requestAnimationFrame(this.anim_loop.bind(this)); // Start the rendering loop
 		document.addEventListener('keydown', (e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keydown":{which:e.which,id:e.target.id}}));});
 		document.addEventListener('keyup', (e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keyup":{which:e.which,id:e.target.id}}));});
-		this.updateMapWindowSizes();
-		window.addEventListener('resize', this.updateMapWindowSizes.bind(this));
 		document.getElementById('mainlayer').addEventListener("mousedown", this.handle_mousedown.bind(this));
 	}
 
@@ -184,24 +182,25 @@ class BluespessClient extends EventEmitter {
 		return obj;
 	}
 
-	updateMapWindowSizes() {
-		var mapwindow_container = document.getElementById("mapwindow-container");
-		var minsize = Math.min(mapwindow_container.clientWidth, mapwindow_container.clientHeight);
-		document.getElementById('mapwindow').style.transform = `scale(${minsize/480})`;
-	}
-
 	get_mouse_target(e) {
-		var clickX = e.offsetX;
-		var clickY = e.offsetY;
+		var rect = e.target.getBoundingClientRect();
+		var clickX = (e.clientX - rect.left) / rect.width * e.target.width;
+		var clickY = (e.clientY - rect.top) / rect.height * e.target.height;
+		console.log(`${clickX}, ${clickY}`);
 		// Iterate through the atoms from top to bottom.
 		var clickedAtom;
 		for(var i = this.atoms.length-1; i >= 0; i--) {
 			var atom = this.atoms[i];
+			if(atom.mouse_opacity == undefined) {
+				atom.mouse_opacity = 1;
+			}
+			if(atom.mouse_opacity == 0)
+				continue;
 			var {dispx, dispy} = atom.get_displacement(performance.now());
 			var localX = (clickX - dispx)/32;
 			var localY = 1-(clickY - dispy)/32;
 			var bounds = atom.get_bounds();
-			if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height && atom.is_mouse_over(localX, localY, performance.now())) {
+			if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height && (atom.mouse_opacity == 2 || atom.is_mouse_over(localX, localY, performance.now()))) {
 				clickedAtom = atom;
 				break;
 			}

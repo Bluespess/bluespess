@@ -96,7 +96,7 @@ class Atom {
 	get_displacement(timestamp) {
 		var dispx = 0;
 		var dispy = 0;
-		if(this.screen_loc_x) {
+		if(this.screen_loc_x != null) {
 			dispx = (32*this.screen_loc_x);
 			dispy = 480-(32*this.screen_loc_y)-32;
 		} else {

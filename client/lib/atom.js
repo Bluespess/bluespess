@@ -1,5 +1,6 @@
 'use strict';
 const IconRenderer = require('./icon_renderer.js');
+const Matrix = require('./matrix.js');
 
 class Atom {
 	constructor(client, instobj = {}) {
@@ -113,6 +114,10 @@ class Atom {
 			dispy = Math.round((this.y-this.client.eyes[""].y-(this.client.eyes[""].glide?this.client.eyes[""].glide.y:0)-7+glidey)*-32);
 		}
 		return {dispx, dispy};
+	}
+
+	get_transform() {
+		return Matrix.identity;
 	}
 
 	update_glide(timestamp) {

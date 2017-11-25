@@ -6,6 +6,7 @@ const PanelManager = require('./lib/panels/manager.js');
 const Component = require('./lib/component.js');
 const EventEmitter = require('events');
 const Sound = require('./lib/sound.js');
+const Matrix = require('./lib/matrix.js');
 
 class BluespessClient extends EventEmitter {
 	constructor(wsurl, resRoot = "") {
@@ -199,6 +200,8 @@ class BluespessClient extends EventEmitter {
 			var {dispx, dispy} = atom.get_displacement(performance.now());
 			var localX = (clickX - dispx)/32;
 			var localY = 1-(clickY - dispy)/32;
+			[localX, localY] = atom.get_transform(performance.now()).multiply([localX - 0.5, localY - 0.5]);
+			localX += 0.5; localY += 0.5;
 			var bounds = atom.get_bounds();
 			if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height && (atom.mouse_opacity == 2 || atom.is_mouse_over(localX, localY, performance.now()))) {
 				clickedAtom = atom;
@@ -260,5 +263,6 @@ BluespessClient.Atom = Atom;
 BluespessClient.Component = Component;
 BluespessClient.IconRenderer = IconRenderer;
 BluespessClient.Sound = Sound;
+BluespessClient.Matrix = Matrix;
 
 module.exports = BluespessClient;

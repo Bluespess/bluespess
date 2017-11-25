@@ -13,6 +13,11 @@ function anim_loop(timestamp) {
 			var {dispx, dispy} = atom.get_displacement(timestamp);
 			ctx.save();
 			ctx.translate(dispx, dispy);
+
+			let tr = atom.get_transform(timestamp);
+			ctx.translate(16, 16);
+			ctx.transform(tr.a, tr.b, tr.c, tr.d, tr.e*32, -tr.f*32);
+			ctx.translate(-16, -16);
 			atom.draw(ctx, timestamp);
 			ctx.restore();
 		}

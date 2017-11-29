@@ -6,6 +6,9 @@ const CHANGE_LEVEL_DIR = 1;
 const CHANGE_LEVEL_ICON_STATE = 2;
 const CHANGE_LEVEL_ICON = 3;
 
+const color_canvas = document.createElement("canvas");
+global.color_canvas = color_canvas;
+
 class IconRenderer {
 	constructor(obj) {
 		if(!obj.client) {
@@ -121,7 +124,25 @@ class IconRenderer {
 			return;
 		var frame_meta = this.dir_meta.frames[this.icon_frame >= 0 && this.icon_frame < this.dir_meta.frames.length ? this.icon_frame : 0];
 
-		ctx.drawImage(this.icon_meta.__image_object, frame_meta.x, frame_meta.y, this.icon_state_meta.width, this.icon_state_meta.height,
+		let image = this.icon_meta.__image_object;
+		if(this.color) {
+			color_canvas.width = Math.max(color_canvas.width, this.icon_state_meta.width);
+			color_canvas.height = Math.max(color_canvas.height, this.icon_state_meta.height);
+			let cctx = color_canvas.getContext('2d');
+			cctx.clearRect(0, 0, this.icon_state_meta.width + 1, this.icon_state_meta.height + 1);
+			cctx.fillStyle = this.color;
+			cctx.globalCompositeOperation = "source-over";
+			cctx.drawImage(image, frame_meta.x, frame_meta.y, this.icon_state_meta.width, this.icon_state_meta.height, 0, 0, this.icon_state_meta.width, this.icon_state_meta.height);
+			cctx.globalCompositeOperation = "multiply";
+			cctx.fillRect(0, 0, this.icon_state_meta.width, this.icon_state_meta.height);
+			cctx.globalCompositeOperation = "destination-in";
+			cctx.drawImage(image, frame_meta.x, frame_meta.y, this.icon_state_meta.width, this.icon_state_meta.height, 0, 0, this.icon_state_meta.width, this.icon_state_meta.height);
+			cctx.globalCompositeOperation = "source-over";
+			image = color_canvas;
+			frame_meta = {x:0, y:0};
+		}
+
+		ctx.drawImage(image, frame_meta.x, frame_meta.y, this.icon_state_meta.width, this.icon_state_meta.height,
 			0, 0, this.icon_state_meta.width, this.icon_state_meta.height);
 	}
 

@@ -89,7 +89,7 @@ class Atom {
 			return;
 		}
 		overlay_renderer.overlay_layer = value.overlay_layer || 0;
-		for(var prop of ['icon', 'icon_state', 'dir'])
+		for(var prop of ['icon', 'icon_state', 'dir', 'color'])
 			overlay_renderer[prop] = value[prop];
 		this.overlay_renderers_list.sort((a,b) => {a.overlay_layer-b.overlay_layer;});
 	}
@@ -178,6 +178,10 @@ class Atom {
 			var overlay_bounds = overlay.get_bounds();
 			if(!overlay_bounds)
 				continue;
+			if(!bounds) {
+				bounds = overlay_bounds;
+				continue;
+			}
 			if(overlay_bounds.x < bounds.x) {
 				bounds.x += bounds.x - overlay_bounds.x;
 				bounds.x = overlay_bounds.x;

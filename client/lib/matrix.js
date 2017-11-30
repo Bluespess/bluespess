@@ -40,7 +40,7 @@ class Matrix {
 			c / ((b * c) - (a * d)),
 			a / ((a * d) - (b * c)),
 			((d * e) - (c * f)) / ((b * c) - (a * d)),
-			((b * e) - (a * f)) / ((a * d) - (b * c)),
+			((b * e) - (a * f)) / ((a * d) - (b * c))
 		);
 	}
 

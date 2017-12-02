@@ -226,7 +226,7 @@ class IconRenderer {
 	set overlay_layer(val) {
 		if(val == this._overlay_layer)
 			return;
-		this._dir = val;
+		this._overlay_layer = val;
 		if(this.atom)
 			this.atom.mark_dirty();
 	}

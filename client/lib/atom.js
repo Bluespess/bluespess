@@ -91,7 +91,7 @@ class Atom {
 		overlay_renderer.overlay_layer = value.overlay_layer || 0;
 		for(var prop of ['icon', 'icon_state', 'dir', 'color'])
 			overlay_renderer[prop] = value[prop];
-		this.overlay_renderers_list.sort((a,b) => {a.overlay_layer-b.overlay_layer;});
+		this.overlay_renderers_list.sort((a,b) => {return a.overlay_layer-b.overlay_layer;});
 	}
 
 	get_displacement(timestamp) {

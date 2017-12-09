@@ -45,7 +45,6 @@ class Panel extends EventEmitter {
 			});
 			this.close_button.addEventListener("mousedown", (e) => {
 				e.preventDefault();
-				e.stopPropagation();
 			});
 		}
 

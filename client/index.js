@@ -187,7 +187,6 @@ class BluespessClient extends EventEmitter {
 		var rect = e.target.getBoundingClientRect();
 		var clickX = (e.clientX - rect.left) / rect.width * e.target.width;
 		var clickY = (e.clientY - rect.top) / rect.height * e.target.height;
-		console.log(`${clickX}, ${clickY}`);
 		// Iterate through the atoms from top to bottom.
 		var clickedAtom;
 		for(var i = this.atoms.length-1; i >= 0; i--) {
@@ -200,12 +199,14 @@ class BluespessClient extends EventEmitter {
 			var {dispx, dispy} = atom.get_displacement(performance.now());
 			var localX = (clickX - dispx)/32;
 			var localY = 1-(clickY - dispy)/32;
-			[localX, localY] = atom.get_transform(performance.now()).multiply([localX - 0.5, localY - 0.5]);
+			[localX, localY] = atom.get_transform(performance.now()).inverse().multiply([localX - 0.5, localY - 0.5]);
 			localX += 0.5; localY += 0.5;
 			var bounds = atom.get_bounds();
-			if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height && (atom.mouse_opacity == 2 || atom.is_mouse_over(localX, localY, performance.now()))) {
-				clickedAtom = atom;
-				break;
+			if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height) {
+				if(atom.mouse_opacity == 2 || atom.is_mouse_over(localX, localY, performance.now())) {
+					clickedAtom = atom;
+					break;
+				}
 			}
 		}
 		if(!clickedAtom)

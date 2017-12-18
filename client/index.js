@@ -241,20 +241,34 @@ class BluespessClient extends EventEmitter {
 }
 
 // This is pretty much identical to the function on the server's lib/utils.js
+const _chain_parent = Symbol('_chain_parent');
+const _chain_spliced = Symbol('_chain_spliced');
 BluespessClient.chain_func = function(func1, func2) {
 	if(func2 == undefined)
 		throw new Error('Chaining undefined function!');
-	return function chained_func(...args) {
-		return func2.call(this, (...override_args)=>{
-			if(!func1)
+	function chained_func(...args) {
+		while(chained_func[_chain_parent] && chained_func[_chain_parent][_chain_spliced]) {
+			chained_func[_chain_parent] = chained_func[_chain_parent][_chain_parent];
+		}
+		let prev = (...override_args)=>{
+			if(!chained_func[_chain_parent])
 				return;
 			if(override_args.length)
-				return func1.call(this, ...override_args);
+				return chained_func[_chain_parent].call(this, ...override_args);
 			else
-				return func1.call(this, ...args);
-		}, ...args);
+				return chained_func[_chain_parent].call(this, ...args);
+		};
+		if(chained_func[_chain_spliced])
+			return prev();
+		return func2.call(this, prev, ...args);
+	}
+	chained_func.splice = function() {
+		chained_func[_chain_spliced] = true;
 	};
-};
+	chained_func[_chain_spliced] = false;
+	chained_func[_chain_parent] = func1;
+	return chained_func;
+},
 
 BluespessClient.prototype.enqueue_icon_meta_load = require('./lib/icon_loader.js');
 BluespessClient.prototype.anim_loop = require('./lib/renderer.js');

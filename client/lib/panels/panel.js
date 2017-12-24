@@ -58,6 +58,8 @@ class Panel extends EventEmitter {
 	}
 
 	_start_drag(e) {
+		if(e.defaultPrevented)
+			return;
 		// bring the panel into focus
 		document.getElementById('uiframes-container').appendChild(this.container_obj);
 		if(e.target != this.header_obj) {

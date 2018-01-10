@@ -89,7 +89,7 @@ class Atom {
 			return;
 		}
 		overlay_renderer.overlay_layer = value.overlay_layer || 0;
-		for(var prop of ['icon', 'icon_state', 'dir', 'color'])
+		for(var prop of ['icon', 'icon_state', 'dir', 'color', 'alpha'])
 			overlay_renderer[prop] = value[prop];
 		this.overlay_renderers_list.sort((a,b) => {return a.overlay_layer-b.overlay_layer;});
 	}
@@ -218,6 +218,16 @@ class Atom {
 	get dir() {return this.main_icon_renderer.dir;}
 	set dir(val) {
 		this.main_icon_renderer.dir = val;
+	}
+
+	get color() {return this.main_icon_renderer.color;}
+	set color(val) {
+		this.main_icon_renderer.color = val;
+	}
+
+	get alpha() {return this.main_icon_renderer.alpha;}
+	set alpha(val) {
+		this.main_icon_renderer.alpha = val;
 	}
 
 	get flick() {

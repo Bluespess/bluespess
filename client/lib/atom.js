@@ -28,6 +28,11 @@ class Atom {
 			this.client.atoms_by_netid[this.network_id] = this;
 		}
 
+		this.eye_id = instobj.eye_id || "";
+		this.eye = client.eyes[this.eye_id];
+		if(this.eye)
+			this.eye.atoms.add(this);
+
 		this.mark_dirty();
 
 		if(instobj.overlays)
@@ -50,6 +55,12 @@ class Atom {
 
 	del() {
 		this.is_destroyed = true;
+		if(this.eye) {
+
+			this.eye.atoms.delete(this);
+			let plane_id = this.get_plane_id();
+			this.eye.planes.get(plane_id).atoms.delete(this);
+		}
 		this.client.atoms.splice(this.client.atoms.indexOf(this), 1);
 		delete this.client.atoms_by_netid[this.network_id];
 		for(var component of Object.values(this.components)) {
@@ -57,11 +68,20 @@ class Atom {
 		}
 	}
 
+	get_plane_id() {
+		if(this.screen_loc_x != null || this.screen_loc_y != null)
+			return "ui";
+		return "";
+	}
+
+	get_plane() {
+		return this.eye && this.eye.planes.get(this.get_plane_id());
+	}
+
 	mark_dirty() {
-		if(this.dirty)
-			return;
-		this.dirty = true;
-		this.client.dirty_atoms.push(this);
+		let plane = this.get_plane();
+		if(plane)
+			plane.dirty_atoms.add(this);
 	}
 
 	set_overlay(key, value) {
@@ -108,10 +128,8 @@ class Atom {
 				glidex = this.glide.x;
 				glidey = this.glide.y;
 			}
-			if(this.client.eyes[""] instanceof Atom)
-				this.client.eyes[""].update_glide(timestamp);
-			dispx = Math.round((this.x-this.client.eyes[""].x-(this.client.eyes[""].glide?this.client.eyes[""].glide.x:0)+7+glidex)*32);
-			dispy = Math.round((this.y-this.client.eyes[""].y-(this.client.eyes[""].glide?this.client.eyes[""].glide.y:0)-7+glidey)*-32);
+			dispx = (this.x+glidex);
+			dispy = (this.y+glidey);
 		}
 		return {dispx, dispy};
 	}
@@ -191,7 +209,7 @@ class Atom {
 				bounds.y = overlay_bounds.y;
 			}
 			bounds.width = Math.max(bounds.width, overlay_bounds.width);
-			bounds.height = Math.max(bounds.width, overlay_bounds.height);
+			bounds.height = Math.max(bounds.height, overlay_bounds.height);
 		}
 		return bounds;
 	}

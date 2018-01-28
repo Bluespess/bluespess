@@ -7,6 +7,7 @@ const Component = require('./lib/component.js');
 const EventEmitter = require('events');
 const Sound = require('./lib/sound.js');
 const Matrix = require('./lib/matrix.js');
+const {Eye, Plane} = require('./lib/eye.js');
 
 class BluespessClient extends EventEmitter {
 	constructor(wsurl, resRoot = "") {
@@ -19,12 +20,12 @@ class BluespessClient extends EventEmitter {
 		this.atoms = [];
 		this.visible_tiles = new Set();
 		this.dirty_atoms = [];
-		this.eyes = {"":{x:0,y:0}};
 		this.glide_size = 10;
 		this.icon_meta_load_queue = {};
 		this.icon_metas = {};
 		this.components = {};
 		this.panel_classes = {};
+		this.eyes = {};
 		this.server_time_to_client;
 		this.audio_buffers = new Map();
 		this.playing_sounds = new Map();
@@ -78,7 +79,7 @@ class BluespessClient extends EventEmitter {
 
 	handleSocketMessage(event) {
 		var obj = JSON.parse(event.data);
-		console.log(obj);
+		//console.log(obj);
 		if(obj.create_atoms) {
 			for(let i = 0; i < obj.create_atoms.length; i++) {
 				new Atom(this, obj.create_atoms[i]);
@@ -150,7 +151,12 @@ class BluespessClient extends EventEmitter {
 		}
 		if(obj.eye) {
 			setTimeout(() => {
-				this.eyes[""] = this.atoms_by_netid[obj.eye[""]];
+				for(let [id, atomid] of Object.entries(obj.eye)) {
+					let eye = this.eyes[id];
+					if(!eye)
+						continue;
+					eye.origin = this.atoms_by_netid[atomid];
+				}
 			}, 500);
 		}
 		if(obj.to_chat) {
@@ -279,5 +285,8 @@ BluespessClient.Component = Component;
 BluespessClient.IconRenderer = IconRenderer;
 BluespessClient.Sound = Sound;
 BluespessClient.Matrix = Matrix;
+
+BluespessClient.Eye = Eye;
+BluespessClient.Plane = Plane;
 
 module.exports = BluespessClient;

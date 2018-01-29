@@ -207,7 +207,7 @@ class BluespessClient extends EventEmitter {
 			var localY = 1-(clickY - dispy)/32;
 			[localX, localY] = atom.get_transform(performance.now()).inverse().multiply([localX - 0.5, localY - 0.5]);
 			localX += 0.5; localY += 0.5;
-			var bounds = atom.get_bounds();
+			var bounds = atom.get_bounds(performance.now());
 			if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height) {
 				if(atom.mouse_opacity == 2 || atom.is_mouse_over(localX, localY, performance.now())) {
 					clickedAtom = atom;

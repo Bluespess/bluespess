@@ -221,10 +221,10 @@ module.exports.now = function now(client) {
 	client.lighting_canvas = document.createElement("canvas");
 	client.lighting_canvas.width = 480;
 	client.lighting_canvas.height = 480;
-	var lighting_atom = new Atom(client, {});
+	/*var lighting_atom = new Atom(client, {});
 	lighting_atom.layer = 20;
 	lighting_atom.draw = overlay_lighting_layer.bind(client);
-	lighting_atom.get_displacement = ()=>{return {dispx:0,dispy:0};};
+	lighting_atom.get_displacement = ()=>{return {dispx:0,dispy:0};};*/
 };
 
 module.exports.components = {LightingObject, LightingTile};

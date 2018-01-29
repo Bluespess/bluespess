@@ -118,8 +118,8 @@ class Atom {
 		var dispx = 0;
 		var dispy = 0;
 		if(this.screen_loc_x != null) {
-			dispx = (32*this.screen_loc_x);
-			dispy = 480-(32*this.screen_loc_y)-32;
+			dispx = this.screen_loc_x;
+			dispy = this.screen_loc_y;
 		} else {
 			var glidex = 0;
 			var glidey = 0;

@@ -44,7 +44,6 @@ class BluespessClient extends EventEmitter {
 		requestAnimationFrame(this.anim_loop.bind(this)); // Start the rendering loop
 		document.addEventListener('keydown', (e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keydown":{which:e.which,id:e.target.id}}));});
 		document.addEventListener('keyup', (e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keyup":{which:e.which,id:e.target.id}}));});
-		document.getElementById('mainlayer').addEventListener("mousedown", this.handle_mousedown.bind(this));
 	}
 
 	importModule(mod) {
@@ -187,62 +186,6 @@ class BluespessClient extends EventEmitter {
 		this.atoms.sort(Atom.atom_comparator);
 
 		return obj;
-	}
-
-	get_mouse_target(e) {
-		var rect = e.target.getBoundingClientRect();
-		var clickX = (e.clientX - rect.left) / rect.width * e.target.width;
-		var clickY = (e.clientY - rect.top) / rect.height * e.target.height;
-		// Iterate through the atoms from top to bottom.
-		var clickedAtom;
-		for(var i = this.atoms.length-1; i >= 0; i--) {
-			var atom = this.atoms[i];
-			if(atom.mouse_opacity == undefined) {
-				atom.mouse_opacity = 1;
-			}
-			if(atom.mouse_opacity == 0)
-				continue;
-			var {dispx, dispy} = atom.get_displacement(performance.now());
-			var localX = (clickX - dispx)/32;
-			var localY = 1-(clickY - dispy)/32;
-			[localX, localY] = atom.get_transform(performance.now()).inverse().multiply([localX - 0.5, localY - 0.5]);
-			localX += 0.5; localY += 0.5;
-			var bounds = atom.get_bounds(performance.now());
-			if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height) {
-				if(atom.mouse_opacity == 2 || atom.is_mouse_over(localX, localY, performance.now())) {
-					clickedAtom = atom;
-					break;
-				}
-			}
-		}
-		if(!clickedAtom)
-			return;
-		return {"atom":clickedAtom,"x":localX,"y":localY, "ctrlKey": e.ctrlKey, "shiftKey": e.shiftKey, "altKey": e.altKey, "button": e.button};
-	}
-
-	handle_mousedown(e) {
-		var start_meta = this.get_mouse_target(e);
-		var start_time = performance.now();
-		var mouseup = (e2) => {
-			if(e2.button != e.button)
-				return;
-			document.removeEventListener("mouseup", mouseup);
-			var end_time = performance.now();
-			var end_meta = this.get_mouse_target(e2);
-			console.log(end_time - start_time);
-			if(end_time - start_time < 200 || end_meta.atom == start_meta.atom) {
-				if(this.connection)
-					this.connection.send(JSON.stringify({"click_on":Object.assign({}, start_meta, {atom: start_meta.atom.network_id})}));
-				return;
-			}
-			this.connection.send(JSON.stringify({
-				"drag": {
-					from: Object.assign({}, start_meta, {atom: start_meta.atom.network_id}),
-					to: Object.assign({}, end_meta, {atom: end_meta.atom.network_id})
-				}
-			}));
-		};
-		document.addEventListener("mouseup", mouseup);
 	}
 }
 

@@ -1,8 +1,5 @@
 'use strict';
-const {chain_func, Component} = require('../index.js');
-const Atom = require('./atom.js');
-
-var buffer_canvas = document.createElement("canvas");
+const {Component} = require('../index.js');
 
 class LightingObject extends Component {
 	constructor(atom, template) {

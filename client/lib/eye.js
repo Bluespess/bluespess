@@ -44,7 +44,7 @@ class Eye {
 		}
 	}
 	get_world_draw_pos(x, y, timestamp) {
-		let {dispx, dispy} = (this.eye.origin && this.eye.origin.get_displacement && this.eye.origin.get_displacement(timestamp)) || {dispx:0,dispy:0};
+		let {dispx, dispy} = (this.origin && this.origin.get_displacement && this.origin.get_displacement(timestamp)) || {dispx:0,dispy:0};
 		return [(x-dispx+7)*32, -(y-dispy-7)*32];
 	}
 	create_click_handlers() {
@@ -56,29 +56,37 @@ class Eye {
 		var clickY = (e.clientY - rect.top) / rect.height * e.target.height;
 		// Iterate through the atoms from top to bottom.
 		var clickedAtom;
-		for(var i = this.atoms.length-1; i >= 0; i--) {
-			var atom = this.atoms[i];
-			if(atom.mouse_opacity == undefined) {
-				atom.mouse_opacity = 1;
-			}
-			if(atom.mouse_opacity == 0)
+		let timestamp = performance.now();
+		for(let plane of [...this.planes.values()].sort((a, b) => {return b.z_index - a.z_index;})) {
+			if(plane.no_click)
 				continue;
-			var {dispx, dispy} = atom.get_displacement(performance.now());
-			let [scrx, scry] = this.get_world_draw_pos(dispx, dispy, performance.now());
-			var localX = (clickX - scrx)/32;
-			var localY = 1-(clickY - scry)/32;
-			[localX, localY] = atom.get_transform(performance.now()).inverse().multiply([localX - 0.5, localY - 0.5]);
-			localX += 0.5; localY += 0.5;
-			var bounds = atom.get_bounds(performance.now());
-			if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height) {
-				if(atom.mouse_opacity == 2 || atom.is_mouse_over(localX, localY, performance.now())) {
-					clickedAtom = atom;
-					break;
+			let [originx, originy] = plane.calculate_origin(timestamp);
+			let [offsetx, offsety] = plane.calculate_composite_offset(timestamp);
+			for(let atom of [...plane.atoms].sort((a,b) => {return Atom.atom_comparator(b,a);})) {
+				if(atom.mouse_opacity == undefined) {
+					atom.mouse_opacity = 1;
+				}
+				if(atom.mouse_opacity == 0)
+					continue;
+				var {dispx, dispy} = atom.get_displacement(timestamp);
+				let [scrx, scry] = [Math.round((dispx-originx)*32+offsetx), Math.round(plane.canvas.height-(dispy-originy)*32-32+offsety)];
+
+				var localX = (clickX - scrx)/32;
+				var localY = 1-(clickY - scry)/32;
+				[localX, localY] = atom.get_transform(timestamp).inverse().multiply([localX - 0.5, localY - 0.5]);
+				localX += 0.5; localY += 0.5;
+				var bounds = atom.get_bounds(timestamp);
+				if(bounds && localX >= bounds.x && localX < bounds.width && localY >= bounds.y && localY < bounds.height) {
+					if(atom.mouse_opacity == 2 || atom.is_mouse_over(localX, localY, timestamp)) {
+						clickedAtom = atom;
+						break;
+					}
 				}
 			}
 		}
 		if(!clickedAtom)
 			return;
+		console.log(clickedAtom.icon_state);
 		return {"atom":clickedAtom,"x":localX,"y":localY, "ctrlKey": e.ctrlKey, "shiftKey": e.shiftKey, "altKey": e.altKey, "button": e.button};
 	}
 
@@ -94,13 +102,13 @@ class Eye {
 			console.log(end_time - start_time);
 			if(end_time - start_time < 200 || end_meta.atom == start_meta.atom) {
 				if(this.client.connection)
-					this.client.connection.send(JSON.stringify({"click_on":Object.assign({}, start_meta, {atom: start_meta.atom.network_id})}));
+					this.client.connection.send(JSON.stringify({"click_on":Object.assign({}, start_meta, {atom: start_meta && start_meta.atom && start_meta.atom.network_id})}));
 				return;
 			}
 			this.client.connection.send(JSON.stringify({
 				"drag": {
-					from: Object.assign({}, start_meta, {atom: start_meta.atom.network_id}),
-					to: Object.assign({}, end_meta, {atom: end_meta.atom.network_id})
+					from: Object.assign({}, start_meta, {atom: start_meta && start_meta.atom && start_meta.atom.network_id}),
+					to: Object.assign({}, end_meta, {atom: end_meta && end_meta.atom && end_meta.atom.network_id})
 				}
 			}));
 		};
@@ -281,8 +289,13 @@ class Plane {
 		return [0, 0];
 	}
 
-	composite_plane(eye_ctx) {
-		eye_ctx.drawImage(this.canvas, 0, 0);
+	calculate_composite_offset() {
+		return [0, 0];
+	}
+
+	composite_plane(eye_ctx, timestamp) {
+		let [ox, oy] = this.calculate_composite_offset(timestamp);
+		eye_ctx.drawImage(this.canvas, ox, oy);
 		//eye_ctx.globalAlpha = 0.5;
 		//eye_ctx.drawImage(this.mask_canvas, 0, 0);
 		//eye_ctx.globalAlpha = 1;
@@ -321,19 +334,17 @@ class WorldPlane extends Plane {
 		return [ox-Math.floor((this.canvas.width / 32 - 1) / 2), oy-Math.floor((this.canvas.height / 32 - 1) / 2)];
 	}
 
-	composite_plane(eye_ctx, timestamp) {
+	calculate_composite_offset(timestamp) {
 		let [originx, originy] = this.calculate_origin();
 		let {dispx, dispy} = (this.eye.origin && this.eye.origin.get_displacement) ? this.eye.origin.get_displacement(timestamp) : {dispx: 0, dispy: 0};
-		eye_ctx.save();
-		eye_ctx.translate(originx*32 - dispx*32+ (7*32), -originy*32 + dispy*32 - (9*32));
-		super.composite_plane(eye_ctx);
-		eye_ctx.restore();
+		return [originx*32 - dispx*32+ (7*32), -originy*32 + dispy*32 - (9*32)];
 	}
 }
 
 class LightingPlane extends WorldPlane {
 	constructor(eye, id) {
 		super(eye, id);
+		this.no_click = true;
 	}
 
 	composite_plane(eye_ctx, timestamp) {

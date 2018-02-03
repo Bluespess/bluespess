@@ -58,8 +58,9 @@ class Atom {
 		if(this.eye) {
 
 			this.eye.atoms.delete(this);
-			let plane_id = this.get_plane_id();
-			this.eye.planes.get(plane_id).atoms.delete(this);
+			let plane = this.get_plane();
+			if(plane)
+				plane.atoms.delete(this);
 		}
 		this.client.atoms.splice(this.client.atoms.indexOf(this), 1);
 		delete this.client.atoms_by_netid[this.network_id];

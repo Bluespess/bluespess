@@ -149,14 +149,12 @@ class BluespessClient extends EventEmitter {
 			}
 		}
 		if(obj.eye) {
-			setTimeout(() => {
-				for(let [id, atomid] of Object.entries(obj.eye)) {
-					let eye = this.eyes[id];
-					if(!eye)
-						continue;
-					eye.origin = this.atoms_by_netid[atomid];
-				}
-			}, 500);
+			for(let [id, atomid] of Object.entries(obj.eye)) {
+				let eye = this.eyes[id];
+				if(!eye)
+					continue;
+				eye.origin = this.atoms_by_netid[atomid];
+			}
 		}
 		if(obj.to_chat) {
 			for(let item of obj.to_chat) {

@@ -186,7 +186,8 @@ class Plane {
 					let {dispx, dispy} = atom.get_displacement(timestamp);
 					newbounds.x += dispx;
 					newbounds.y += dispy;
-					if(newbounds.x != lastbounds.x || newbounds.y != lastbounds.y || newbounds.width != lastbounds.width || newbounds.height != lastbounds.height) {
+					newbounds.transform = atom.get_transform(timestamp);
+					if(newbounds.x != lastbounds.x || newbounds.y != lastbounds.y || newbounds.width != lastbounds.width || newbounds.height != lastbounds.height || !newbounds.transform.equals(lastbounds.transform)) {
 						for(let x = Math.floor(newbounds.x); x < Math.ceil(newbounds.x + newbounds.width); x++) {
 							for(let y = Math.floor(newbounds.y); y < Math.ceil(newbounds.y + newbounds.height); y++) {
 								dirty_tiles.add(`[${x},${y}]`);
@@ -218,6 +219,7 @@ class Plane {
 			let {dispx, dispy} = atom.get_displacement(timestamp);
 			bounds.x += dispx;
 			bounds.y += dispy;
+			bounds.transform = atom.get_transform(timestamp);
 			for(let x = Math.floor(bounds.x); x < Math.ceil(bounds.x + bounds.width); x++) {
 				for(let y = Math.floor(bounds.y); y < Math.ceil(bounds.y + bounds.height); y++) {
 					dirty_tiles.add(`[${x},${y}]`);

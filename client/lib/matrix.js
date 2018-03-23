@@ -59,6 +59,10 @@ class Matrix {
 			sy = sx;
 		return this.translate(-ox, -oy).multiply(new Matrix(sx, 0, 0, sy, 0, 0)).translate(ox, oy);
 	}
+
+	equals(other) {
+		return other.a == this.a && other.b == this.b && other.c == this.c && other.d == this.d && other.e == this.e && other.f == this.f;
+	}
 }
 
 Matrix.identity = new Matrix(1, 0, 0, 1, 0, 0);

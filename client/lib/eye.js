@@ -83,6 +83,8 @@ class Eye {
 					}
 				}
 			}
+			if(clickedAtom)
+				break;
 		}
 		if(!clickedAtom)
 			return;

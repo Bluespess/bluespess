@@ -142,20 +142,7 @@ class Atom {
 	update_glide(timestamp) {
 		if(!this.glide)
 			return;
-		var glidex = this.glide.x;
-		var glidey = this.glide.y;
-		var glide_size = +this.glide_size;
-		if(glide_size != glide_size) glide_size = this.client.glide_size;
-		if(glide_size != glide_size || glide_size == 0) {
-			this.glide = null;
-			return;
-		}
-		var dist = Math.max(glide_size * (timestamp - this.glide.lasttime) / 1000,0);
-		this.glide.lasttime = timestamp;
-		if(Math.abs(glidex) < dist){glidex = 0;} else {glidex -= Math.sign(glidex) * dist;}
-		if(Math.abs(glidey) < dist){glidey = 0;} else {glidey -= Math.sign(glidey) * dist;}
-		this.glide.x = glidex; this.glide.y = glidey;
-		if(glidex == 0 && glidey == 0) this.glide = undefined;
+		this.glide.update(timestamp);
 	}
 
 	is_mouse_over(x, y) {
@@ -273,6 +260,44 @@ class Atom {
 		return this.components;
 	}
 }
+
+class Glide {
+	constructor(object, params) {
+		this.object = object;
+		this.lasttime = params.lasttime;
+		this.x = 0;
+		this.y = 0;
+		if(params.oldx == +params.oldx && params.oldy == +params.oldy && (params.oldx != object.x || params.oldy != object.y) && Math.abs(Math.max(object.x-params.oldx,object.y-params.oldy)) <= 1.00001) {
+			var pgx = (object.glide && object.glide.x) || 0;
+			if(Math.sign(pgx) == params.oldx-object.x)
+				pgx = 0;
+			var pgy = (object.glide && object.glide.y) || 0;
+			if(Math.sign(pgy) == params.oldy-object.y)
+				pgy = 0;
+			Object.assign(this, {x:params.oldx-object.x+pgx,y:params.oldy-object.y+pgy,lasttime:performance.now()});
+			return this;
+		}
+		return object.glide;
+	}
+	update(timestamp) {
+		var glidex = this.x;
+		var glidey = this.y;
+		var glide_size = +this.object.glide_size;
+		if(glide_size != glide_size) glide_size = this.object.client.glide_size;
+		if(glide_size != glide_size || glide_size == 0) {
+			this.object.glide = null;
+			return;
+		}
+		var dist = Math.max(glide_size * (timestamp - this.lasttime) / 1000,0);
+		this.lasttime = timestamp;
+		if(Math.abs(glidex) < dist){glidex = 0;} else {glidex -= Math.sign(glidex) * dist;}
+		if(Math.abs(glidey) < dist){glidey = 0;} else {glidey -= Math.sign(glidey) * dist;}
+		this.x = glidex; this.y = glidey;
+		if(glidex == 0 && glidey == 0) this.object.glide = undefined;
+	}
+}
+
+Atom.Glide = Glide;
 
 Atom.atom_comparator = function(a, b) {
 	if(!a && !b)

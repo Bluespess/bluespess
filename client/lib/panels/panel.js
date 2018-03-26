@@ -60,8 +60,6 @@ class Panel extends EventEmitter {
 	_start_drag(e) {
 		if(e.defaultPrevented)
 			return;
-		// bring the panel into focus
-		document.getElementById('uiframes-container').appendChild(this.container_obj);
 		if(e.target != this.header_obj) {
 			return;
 		}
@@ -116,6 +114,10 @@ class Panel extends EventEmitter {
 	}
 
 	_start_resize(e) {
+		// bring the panel into focus
+		if(this.container_obj != document.getElementById('uiframes-container').lastChild)
+			document.getElementById('uiframes-container').appendChild(this.container_obj);
+
 		var resize_meta = this._resize_meta(e);
 		if(!resize_meta.can_resize)
 			return;

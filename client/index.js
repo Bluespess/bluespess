@@ -99,15 +99,7 @@ class BluespessClient extends EventEmitter {
 					}
 					atom[key] = inst[key];
 				}
-				if((oldx != atom.x || oldy != atom.y) && Math.abs(Math.max(atom.x-oldx,atom.y-oldy)) <= 1.00001) {
-					var pgx = (atom.glide && atom.glide.x) || 0;
-					if(Math.sign(pgx) == oldx-atom.x)
-						pgx = 0;
-					var pgy = (atom.glide && atom.glide.y) || 0;
-					if(Math.sign(pgy) == oldy-atom.y)
-						pgy = 0;
-					atom.glide = {x:oldx-atom.x+pgx,y:oldy-atom.y+pgy,lasttime:performance.now()};
-				}
+				atom.glide = new Atom.Glide(atom, {oldx, oldy, lasttime:performance.now()});
 				if(inst.overlays) {
 					for(let key in inst.overlays) {
 						if(!inst.overlays.hasOwnProperty(key))
@@ -149,11 +141,14 @@ class BluespessClient extends EventEmitter {
 			}
 		}
 		if(obj.eye) {
-			for(let [id, atomid] of Object.entries(obj.eye)) {
+			for(let [id, props] of Object.entries(obj.eye)) {
 				let eye = this.eyes[id];
 				if(!eye)
 					continue;
-				eye.origin = this.atoms_by_netid[atomid];
+				let oldx = eye.origin.x;
+				let oldy = eye.origin.y;
+				Object.assign(eye.origin, props);
+				eye.origin.glide = new Atom.Glide(eye.origin, {oldx, oldy, lasttime: performance.now()});
 			}
 		}
 		if(obj.to_chat) {

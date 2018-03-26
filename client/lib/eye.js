@@ -19,7 +19,7 @@ class Eye {
 			}
 		}
 
-		this.origin = {x:0, y:0};
+		this.origin = {x:0, y:0, glide_size: 10, update_glide: Atom.prototype.update_glide, client: this.client, get_displacement: Atom.prototype.get_displacement};
 	}
 
 	draw(timestamp) {

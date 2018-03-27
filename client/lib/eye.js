@@ -93,6 +93,7 @@ class Eye {
 	}
 
 	handle_mousedown(e) {
+		e.preventDefault();
 		var start_meta = this.get_mouse_target(e);
 		var start_time = performance.now();
 		var mouseup = (e2) => {

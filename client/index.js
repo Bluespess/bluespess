@@ -42,8 +42,25 @@ class BluespessClient extends EventEmitter {
 		this.connection.addEventListener('message', this.handleSocketMessage.bind(this));
 		this.connection.addEventListener('open', () => {this.connection.send(JSON.stringify({"login":"guest" + Math.floor(Math.random()*1000000)}));});
 		requestAnimationFrame(this.anim_loop.bind(this)); // Start the rendering loop
-		document.addEventListener('keydown', (e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keydown":{which:e.which,id:e.target.id}}));});
-		document.addEventListener('keyup', (e) => {if(e.target.localName != "input"&&this.connection)this.connection.send(JSON.stringify({"keyup":{which:e.which,id:e.target.id}}));});
+		let networked_down = new Set();
+		document.addEventListener('keydown', (e) => {
+			if(e.target.localName != "input" && this.connection) {
+				networked_down.add(e.which);
+				this.connection.send(JSON.stringify({"keydown":{which:e.which,id:e.target.id}}));
+			}
+		});
+		document.addEventListener('keyup', (e) => {
+			if((e.target.localName != "input" && this.connection) || networked_down.has(e.which)) {
+				networked_down.delete(e.which);
+				this.connection.send(JSON.stringify({"keyup":{which:e.which,id:e.target.id}}));
+			}
+		});
+		window.addEventListener('blur', () => {
+			for(let which of networked_down) {
+				this.connection.send(JSON.stringify({"keyup":{which}}));
+				networked_down.delete(which);
+			}
+		});
 	}
 
 	importModule(mod) {
@@ -152,11 +169,17 @@ class BluespessClient extends EventEmitter {
 			}
 		}
 		if(obj.to_chat) {
+			let cw = document.getElementById('chatwindow');
+			let do_scroll = false;
+			if(cw.scrollTop + cw.clientHeight >= cw.scrollHeight)
+				do_scroll = true;
 			for(let item of obj.to_chat) {
 				let newdiv = document.createElement('div');
 				newdiv.innerHTML = item;
 				document.getElementById('chatwindow').appendChild(newdiv);
 			}
+			if(do_scroll)
+				cw.scrollTop = cw.scrollHeight - cw.clientHeight;
 		}
 		if(obj.panel) {
 			this.panel_manager.handle_message(obj.panel);

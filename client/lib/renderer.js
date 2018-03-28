@@ -6,7 +6,9 @@ function anim_loop(timestamp) {
 	}
 
 	if(this.audio_ctx) {
-		//this.audio_ctx.listener.setPosition(this.eyes[""].origin.x, 0, -this.eyes[""].origin.y);
+		for(let sound of this.playing_sounds.values()) {
+			sound.update_spatial(sound.emitter, timestamp);
+		}
 	}
 
 	requestAnimationFrame(anim_loop.bind(this));

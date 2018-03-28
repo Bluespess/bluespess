@@ -40,13 +40,22 @@ class Sound {
 		this.spatial_node = this.client.audio_ctx.createPanner();
 		this.spatial_node.panningModel = "HRTF";
 		node.connect(this.spatial_node);
-		this.update_spatial(emitter);
+		this.update_spatial(emitter, performance.now());
 		return this.spatial_node;
 	}
 
-	update_spatial(emitter) {
-		if(this.spatial_node)
-			this.spatial_node.setPosition(emitter.x, 0, -emitter.y);
+	update_spatial(emitter, timestamp) {
+		if(this.spatial_node) {
+			let eye = emitter.eye || this.client.eyes[emitter.eye_id || ""];
+			if(!eye)
+				return;
+			let eye_disp = eye.origin.get_displacement(timestamp);
+			if(eye_disp.dispx != +eye_disp.dispx || eye_disp.dispy != +eye_disp.dispy)
+				return;
+			if(emitter.x != +emitter.x || emitter.y != +emitter.y)
+				return;
+			this.spatial_node.setPosition(emitter.x - eye_disp.dispx, 0, -emitter.y + eye_disp.dispy);
+		}
 	}
 
 	start() {

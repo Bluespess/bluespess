@@ -45,6 +45,8 @@ class Eye {
 	}
 	get_world_draw_pos(x, y, timestamp) {
 		let {dispx, dispy} = (this.origin && this.origin.get_displacement && this.origin.get_displacement(timestamp)) || {dispx:0,dispy:0};
+		dispx = Math.round(dispx*32)/32;
+		dispy = Math.round(dispy*32)/32;
 		return [(x-dispx+7)*32, -(y-dispy-7)*32];
 	}
 	create_click_handlers() {
@@ -69,6 +71,8 @@ class Eye {
 				if(atom.mouse_opacity == 0)
 					continue;
 				var {dispx, dispy} = atom.get_displacement(timestamp);
+				dispx = Math.round(dispx*32)/32;
+				dispy = Math.round(dispy*32)/32;
 				let [scrx, scry] = [Math.round((dispx-originx)*32+offsetx), Math.round(plane.canvas.height-(dispy-originy)*32-32+offsety)];
 
 				var localX = (clickX - scrx)/32;
@@ -187,6 +191,8 @@ class Plane {
 				let newbounds = atom.get_bounds(timestamp);
 				if(newbounds) {
 					let {dispx, dispy} = atom.get_displacement(timestamp);
+					dispx = Math.round(dispx*32)/32;
+					dispy = Math.round(dispy*32)/32;
 					newbounds.x += dispx;
 					newbounds.y += dispy;
 					newbounds.transform = atom.get_transform(timestamp);
@@ -220,6 +226,8 @@ class Plane {
 			if(!bounds)
 				continue;
 			let {dispx, dispy} = atom.get_displacement(timestamp);
+			dispx = Math.round(dispx*32)/32;
+			dispy = Math.round(dispy*32)/32;
 			bounds.x += dispx;
 			bounds.y += dispy;
 			bounds.transform = atom.get_transform(timestamp);
@@ -248,6 +256,8 @@ class Plane {
 			if(!bounds)
 				continue;
 			let {dispx, dispy} = atom.get_displacement(timestamp);
+			dispx = Math.round(dispx*32)/32;
+			dispy = Math.round(dispy*32)/32;
 			bounds.x += dispx;
 			bounds.y += dispy;
 			let should_draw = false;
@@ -335,13 +345,15 @@ class WorldPlane extends Plane {
 	}
 
 	calculate_origin() {
-		let [ox, oy] = [this.eye.origin.x, this.eye.origin.y];
+		let [ox, oy] = [Math.round(this.eye.origin.x), Math.round(this.eye.origin.y)];
 		return [ox-Math.floor((this.canvas.width / 32 - 1) / 2), oy-Math.floor((this.canvas.height / 32 - 1) / 2)];
 	}
 
 	calculate_composite_offset(timestamp) {
 		let [originx, originy] = this.calculate_origin();
 		let {dispx, dispy} = (this.eye.origin && this.eye.origin.get_displacement) ? this.eye.origin.get_displacement(timestamp) : {dispx: 0, dispy: 0};
+		dispx = Math.round(dispx*32)/32;
+		dispy = Math.round(dispy*32)/32;
 		return [originx*32 - dispx*32+ (7*32), -originy*32 + dispy*32 - (9*32)];
 	}
 }

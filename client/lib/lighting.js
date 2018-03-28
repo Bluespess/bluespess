@@ -37,7 +37,7 @@ class LightingObject extends Component {
 	}
 
 	draw(ctx, timestamp) {
-		if(this.atom.screen_loc_x != null || this.radius !== +this.radius || !this.on)
+		if(this.atom.screen_loc_x != null || this.radius !== +this.radius || !this.enabled)
 			return;
 
 		if(this.dirty) {

@@ -29,6 +29,9 @@ class BluespessClient extends EventEmitter {
 		this.server_time_to_client;
 		this.audio_buffers = new Map();
 		this.playing_sounds = new Map();
+
+		this.soft_shadow_resolution = 8;
+
 		if(!global.is_bs_editor_env)
 			this.audio_ctx = new AudioContext();
 		this.importModule(require('./lib/lighting.js'));

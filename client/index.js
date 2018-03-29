@@ -34,13 +34,25 @@ class BluespessClient extends EventEmitter {
 		this.importModule(require('./lib/lighting.js'));
 	}
 
+	handle_login() {
+		this.connection.send(JSON.stringify({"login":"guest" + Math.floor(Math.random()*1000000)}));
+		this.login_finish();
+	}
+
 	login() {
 		if(global.is_bs_editor_env)
 			throw new Error("Client should not be started in editor mode");
 		this.connection = new WebSocket(this.wsurl);
 		this.panel_manager = new PanelManager(this);
+		this.connection.addEventListener('open', () => {
+			this.handle_login();
+		});
+	}
+
+	login_finish() {
+		if(global.is_bs_editor_env)
+			throw new Error("Client should not be started in editor mode");
 		this.connection.addEventListener('message', this.handleSocketMessage.bind(this));
-		this.connection.addEventListener('open', () => {this.connection.send(JSON.stringify({"login":"guest" + Math.floor(Math.random()*1000000)}));});
 		requestAnimationFrame(this.anim_loop.bind(this)); // Start the rendering loop
 		let networked_down = new Set();
 		document.addEventListener('keydown', (e) => {
@@ -95,7 +107,6 @@ class BluespessClient extends EventEmitter {
 
 	handleSocketMessage(event) {
 		var obj = JSON.parse(event.data);
-		//console.log(obj);
 		if(obj.create_atoms) {
 			for(let i = 0; i < obj.create_atoms.length; i++) {
 				new Atom(this, obj.create_atoms[i]);

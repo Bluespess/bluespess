@@ -16,6 +16,12 @@ class PanelManager extends EventEmitter {
 		this.client.connection.send(JSON.stringify({panel: obj}));
 	}
 
+	create_client_panel(obj) {
+		let panel = new Panel(this, null, obj);
+		this.emit("create", panel, obj);
+		return panel;
+	}
+
 	handle_message(obj) {
 		if(obj.create) {
 			for(let id in obj.create) {

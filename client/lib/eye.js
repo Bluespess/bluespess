@@ -92,7 +92,6 @@ class Eye {
 		}
 		if(!clickedAtom)
 			return;
-		console.log(clickedAtom.icon_state);
 		return {"atom":clickedAtom,"x":localX,"y":localY, "ctrlKey": e.ctrlKey, "shiftKey": e.shiftKey, "altKey": e.altKey, "button": e.button};
 	}
 

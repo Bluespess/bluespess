@@ -5,7 +5,6 @@ const EventEmitter = require('events');
 class Panel extends EventEmitter {
 	constructor(manager, id, {width=400, height=400, title="", can_close=true, content_class}={}) {
 		super();
-		console.log(this);
 		var left = document.documentElement.clientWidth / 2 - width / 2;
 		var top = document.documentElement.clientHeight / 2 - height / 2;
 		this.container_obj = document.createElement('div');
@@ -170,13 +169,17 @@ class Panel extends EventEmitter {
 	}
 
 	send_message(message) {
+		if(!this.id)
+			throw new Error('Cannot send a panel message without an ID!');
 		this.manager.send_message({message: [{id: this.id, contents: message}]});
 	}
 
 	close() {
-		this.manager.send_message({close:[this.id]});
-		if(this.manager.panels[this.id] == this)
-			this.manager.panels[this.id] = null;
+		if(this.id) {
+			this.manager.send_message({close:[this.id]});
+			if(this.manager.panels[this.id] == this)
+				this.manager.panels[this.id] = null;
+		}
 		document.getElementById('uiframes-container').removeChild(this.container_obj);
 		this.emit("close");
 	}

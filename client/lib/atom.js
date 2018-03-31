@@ -264,7 +264,7 @@ class Atom {
 class Glide {
 	constructor(object, params) {
 		this.object = object;
-		this.lasttime = params.lasttime;
+		this.lasttime = params.lasttime || performance.now();
 		this.x = 0;
 		this.y = 0;
 		if(params.oldx == +params.oldx && params.oldy == +params.oldy && (params.oldx != object.x || params.oldy != object.y) && Math.abs(Math.max(object.x-params.oldx,object.y-params.oldy)) <= 1.50001) {
@@ -274,7 +274,7 @@ class Glide {
 			var pgy = (object.glide && object.glide.y) || 0;
 			if(Math.sign(pgy) == params.oldy-object.y)
 				pgy = 0;
-			Object.assign(this, {x:params.oldx-object.x+pgx,y:params.oldy-object.y+pgy,lasttime:performance.now()});
+			Object.assign(this, {x:params.oldx-object.x+pgx,y:params.oldy-object.y+pgy});
 			return this;
 		}
 		return object.glide;

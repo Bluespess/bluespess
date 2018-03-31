@@ -110,6 +110,7 @@ class BluespessClient extends EventEmitter {
 
 	handleSocketMessage(event) {
 		var obj = JSON.parse(event.data);
+		let timestamp = performance.now();
 		if(obj.create_atoms) {
 			for(let i = 0; i < obj.create_atoms.length; i++) {
 				new Atom(this, obj.create_atoms[i]);
@@ -130,7 +131,7 @@ class BluespessClient extends EventEmitter {
 					}
 					atom[key] = inst[key];
 				}
-				atom.glide = new Atom.Glide(atom, {oldx, oldy, lasttime:performance.now()});
+				atom.glide = new Atom.Glide(atom, {oldx, oldy, lasttime:timestamp});
 				if(inst.overlays) {
 					for(let key in inst.overlays) {
 						if(!inst.overlays.hasOwnProperty(key))
@@ -159,7 +160,7 @@ class BluespessClient extends EventEmitter {
 			}
 		}
 		if(obj.timestamp) {
-			this.server_time_to_client = performance.now() - obj.timestamp;
+			this.server_time_to_client = timestamp - obj.timestamp;
 		}
 		if(obj.add_tiles) {
 			for(let tile of obj.add_tiles) {
@@ -179,7 +180,7 @@ class BluespessClient extends EventEmitter {
 				let oldx = eye.origin.x;
 				let oldy = eye.origin.y;
 				Object.assign(eye.origin, props);
-				eye.origin.glide = new Atom.Glide(eye.origin, {oldx, oldy, lasttime: performance.now()});
+				eye.origin.glide = new Atom.Glide(eye.origin, {oldx, oldy, lasttime: timestamp});
 			}
 		}
 		if(obj.to_chat) {

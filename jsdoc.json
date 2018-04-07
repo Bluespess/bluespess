@@ -1,0 +1,11 @@
+{
+	"source": {
+		"include": ["index.js", "lib/"]
+	},
+	"opts": {
+		"recurse": true,
+		"template": "./node_modules/docdash",
+		"encoding": "utf8",
+		"destination": "docs/"
+	}
+}

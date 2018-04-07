@@ -8,7 +8,8 @@
     "url": "https://github.com/bluespess/bluespess.git"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate-docs": "node_modules/.bin/jsdoc -c jsdoc.json"
   },
   "author": "monster860",
   "license": "MIT",
@@ -18,5 +19,9 @@
   },
   "engines": {
     "node": ">=6.4.0"
+  },
+  "devDependencies": {
+    "docdash": "^0.4.0",
+    "jsdoc": "^3.5.5"
   }
 }

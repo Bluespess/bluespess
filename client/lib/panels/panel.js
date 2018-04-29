@@ -199,12 +199,29 @@ class Panel extends EventEmitter {
 					this.send_message({[target.dataset.radioGroup]:target.dataset.radioValue});
 				}
 			}
+			if(target.dataset.toggle) {
+				target.classList.toggle("on");
+				let on = target.classList.has("on");
+				if(target.dataset.toggle != "1" && target.dataset.toggle != "true")
+					this.send_message(build_message(target.dataset.toggle, on));
+			}
 		}
 	}
 
 	is_valid_button(elem) {
 		return elem && elem.classList && elem.classList.contains("button") && !elem.classList.contains("disabled") && !elem.classList.contains("selected");
 	}
+}
+
+function build_message(path, val) {
+	let obj = {};
+	let ret_obj = obj;
+	let split = path.split(/\./g);
+	for(let i = 0; i < (split.length - 1); i++) {
+		obj[split[i]] = (obj = {});
+	}
+	obj[split[split.length - 1]] = val;
+	return ret_obj;
 }
 
 module.exports = Panel;

@@ -12,6 +12,7 @@ class Panel extends EventEmitter {
 		this.container_obj.classList.add('uiframe-container');
 		this.panel_obj = document.createElement('div');
 		this.panel_obj.classList.add('uiframe');
+		this.panel_obj.tabIndex = -1;
 		this.header_obj = document.createElement('div');
 		this.header_obj.classList.add('uiframe-header');
 		this.title_node = document.createTextNode(title);
@@ -64,6 +65,7 @@ class Panel extends EventEmitter {
 		}
 		var pad = (this.container_obj.offsetWidth - this.panel_obj.offsetWidth)/2;
 		e.preventDefault();
+		this.panel_obj.focus();
 		var lastclientx = e.clientX;
 		var lastclienty = e.clientY;
 		var mousemove = (e) => {
@@ -122,6 +124,7 @@ class Panel extends EventEmitter {
 			return;
 		var pad = (this.container_obj.offsetWidth - this.panel_obj.offsetWidth)/2;
 		e.preventDefault();
+		this.panel_obj.focus();
 		var lastclientx = e.clientX;
 		var lastclienty = e.clientY;
 		var mousemove = (e) => {

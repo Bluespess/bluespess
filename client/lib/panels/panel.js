@@ -204,7 +204,7 @@ class Panel extends EventEmitter {
 			}
 			if(target.dataset.toggle) {
 				target.classList.toggle("on");
-				let on = target.classList.has("on");
+				let on = target.classList.contains("on");
 				if(target.dataset.toggle != "1" && target.dataset.toggle != "true")
 					this.send_message(build_message(target.dataset.toggle, on));
 			}

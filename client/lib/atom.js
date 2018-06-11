@@ -110,7 +110,7 @@ class Atom {
 			return;
 		}
 		overlay_renderer.overlay_layer = value.overlay_layer || 0;
-		for(var prop of ['icon', 'icon_state', 'dir', 'color', 'alpha'])
+		for(var prop of ['icon', 'icon_state', 'dir', 'color', 'alpha', 'offset_x', 'offset_y'])
 			overlay_renderer[prop] = value[prop];
 		this.overlay_renderers_list.sort((a,b) => {return a.overlay_layer-b.overlay_layer;});
 	}
@@ -189,15 +189,15 @@ class Atom {
 				continue;
 			}
 			if(overlay_bounds.x < bounds.x) {
-				bounds.x += bounds.x - overlay_bounds.x;
+				bounds.width += bounds.x - overlay_bounds.x;
 				bounds.x = overlay_bounds.x;
 			}
 			if(overlay_bounds.y < bounds.y) {
-				bounds.y += bounds.y - overlay_bounds.y;
+				bounds.height += bounds.y - overlay_bounds.y;
 				bounds.y = overlay_bounds.y;
 			}
-			bounds.width = Math.max(bounds.width, overlay_bounds.width);
-			bounds.height = Math.max(bounds.height, overlay_bounds.height);
+			bounds.width = Math.max(bounds.width, (overlay_bounds.x - bounds.x) + overlay_bounds.width);
+			bounds.height = Math.max(bounds.height, (overlay_bounds.y - bounds.y) + overlay_bounds.height);
 		}
 		return bounds;
 	}

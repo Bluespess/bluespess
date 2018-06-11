@@ -19,6 +19,8 @@ class IconRenderer {
 		}
 		this._overlay_layer = 0;
 		this.change_level = 0;
+		this._offset_x = 0;
+		this._offset_y = 0;
 	}
 
 	// Returns a promise that is resolved when the icon is fully loaded (json and image)
@@ -31,7 +33,7 @@ class IconRenderer {
 	get_bounds() {
 		if(!this.dir_meta || !this.icon_meta || !this.icon_state_meta)
 			return;
-		return {x:0,y:1-(this.icon_state_meta.height/32),width:this.icon_state_meta.width/32,height:this.icon_state_meta.height/32};
+		return {x:this.offset_x,y:1-(this.icon_state_meta.height/32)+this.offset_y,width:this.icon_state_meta.width/32,height:this.icon_state_meta.height/32};
 	}
 
 	on_render_tick(timestamp) {
@@ -145,12 +147,14 @@ class IconRenderer {
 		}
 
 		ctx.drawImage(image, frame_meta.x, frame_meta.y, this.icon_state_meta.width, this.icon_state_meta.height,
-			0, 0, this.icon_state_meta.width, this.icon_state_meta.height);
+			Math.round(this.offset_x * 32), Math.round(-this.offset_y * 32), this.icon_state_meta.width, this.icon_state_meta.height);
 	}
 
 	is_mouse_over(x, y) {
 		if(!this.icon_meta || !this.dir_meta || !this.icon_meta.__image_data)
 			return false;
+		x -= this.offset_x;
+		y -= this.offset_y;
 		var pxx = Math.floor(x*32);
 		var pxy = Math.floor(32-y*32);
 		var frame_meta = this.dir_meta.frames[this.icon_frame >= 0 && this.icon_frame < this.dir_meta.frames.length ? this.icon_frame : 0];
@@ -229,6 +233,23 @@ class IconRenderer {
 		if(val == this._overlay_layer)
 			return;
 		this._overlay_layer = val;
+		if(this.atom)
+			this.atom.mark_dirty();
+	}
+
+	get offset_x() {return this._offset_x;}
+	set offset_x(val) {
+		if(val == this._offset_x)
+			return;
+		this._offset_x = +val || 0;
+		if(this.atom)
+			this.atom.mark_dirty();
+	}
+	get offset_y() {return this._offset_y;}
+	set offset_y(val) {
+		if(val == this._offset_y)
+			return;
+		this._offset_y = +val || 0;
 		if(this.atom)
 			this.atom.mark_dirty();
 	}

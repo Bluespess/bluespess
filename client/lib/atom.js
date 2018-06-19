@@ -202,6 +202,33 @@ class Atom {
 		return bounds;
 	}
 
+	get_transformed_bounds(timestamp) {
+		let transform = this.get_transform(timestamp);
+		let bounds = this.get_bounds(timestamp);
+		if(!bounds)
+			return bounds;
+		let corners = [
+			[bounds.x, bounds.y],
+			[bounds.x + bounds.width, bounds.y],
+			[bounds.x, bounds.y + bounds.height],
+			[bounds.x + bounds.width, bounds.y + bounds.height]
+		];
+		let [left, right, top, bottom] = [Infinity, -Infinity, -Infinity, Infinity];
+		for(let corner of corners) {
+			let transformed_corner = transform.multiply(corner);
+			left = Math.min(left, transformed_corner[0]);
+			right = Math.max(right, transformed_corner[0]);
+			top = Math.max(top, transformed_corner[1]);
+			bottom = Math.min(bottom, transformed_corner[1]);
+		}
+		return {
+			x: left,
+			y: bottom,
+			width: right - left,
+			height: top - bottom
+		};
+	}
+
 	fully_load() {
 		var promises = [];
 		promises.push(this.main_icon_renderer.fully_load());

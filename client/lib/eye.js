@@ -187,7 +187,7 @@ class Plane {
 				this.last_draw.delete(atom);
 				dirty = true;
 			} else {
-				let newbounds = atom.get_bounds(timestamp);
+				let newbounds = atom.get_transformed_bounds(timestamp);
 				if(newbounds) {
 					let {dispx, dispy} = atom.get_displacement(timestamp);
 					dispx = Math.round(dispx*32)/32;
@@ -221,7 +221,7 @@ class Plane {
 		for(let atom of this.atoms) {
 			if(!this.dirty_atoms.has(atom) && this.last_draw.has(atom))
 				continue;
-			let bounds = atom.get_bounds(timestamp);
+			let bounds = atom.get_transformed_bounds(timestamp);
 			if(!bounds)
 				continue;
 			let {dispx, dispy} = atom.get_displacement(timestamp);
@@ -251,7 +251,7 @@ class Plane {
 		for(let atom of [...this.atoms].sort(Atom.atom_comparator)) {
 			if(!atom)
 				continue;
-			let bounds = atom.get_bounds(timestamp);
+			let bounds = atom.get_transformed_bounds(timestamp);
 			if(!bounds)
 				continue;
 			let {dispx, dispy} = atom.get_displacement(timestamp);

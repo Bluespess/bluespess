@@ -215,7 +215,9 @@ class Atom {
 		];
 		let [left, right, top, bottom] = [Infinity, -Infinity, -Infinity, Infinity];
 		for(let corner of corners) {
-			let transformed_corner = transform.multiply(corner);
+			let transformed_corner = transform.multiply([corner[0] - 0.5, corner[1] - 0.5]);
+			transformed_corner[0] += 0.5;
+			transformed_corner[1] += 0.5;
 			left = Math.min(left, transformed_corner[0]);
 			right = Math.max(right, transformed_corner[0]);
 			top = Math.max(top, transformed_corner[1]);

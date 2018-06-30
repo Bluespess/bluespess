@@ -253,6 +253,24 @@ class IconRenderer {
 		if(this.atom)
 			this.atom.mark_dirty();
 	}
+
+	get color() {return this._color;}
+	set color(val) {
+		if(val == this._color)
+			return;
+		this._color = "" + val;
+		if(this.atom)
+			this.atom.mark_dirty();
+	}
+
+	get alpha() {return this._alpha;}
+	set alpha(val) {
+		if(val == this._alpha)
+			return;
+		this._alpha = "" + val;
+		if(this.atom)
+			this.atom.mark_dirty();
+	}
 }
 
 module.exports = IconRenderer;

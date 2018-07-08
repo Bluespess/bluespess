@@ -216,10 +216,10 @@ class Panel extends EventEmitter {
 	}
 
 	$(sel) {
-		return this.content_obj.querySelector(query);
+		return this.content_obj.querySelector(sel);
 	}
 	$$(sel) {
-		return this.content_obj.querySelectorAll(query);
+		return this.content_obj.querySelectorAll(sel);
 	}
 }
 

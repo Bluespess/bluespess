@@ -97,6 +97,14 @@ class Eye {
 
 	handle_mousedown(e) {
 		e.preventDefault();
+
+		// swapping hands with middle click
+		if(e.button == 1) { // middle mouse button
+			if(this.client.connection)
+				this.client.connection.send(JSON.stringify({"swap_hands": true}));
+			return;
+		}
+
 		var start_meta = this.get_mouse_target(e);
 		var start_time = performance.now();
 		var mouseup = (e2) => {
@@ -105,7 +113,6 @@ class Eye {
 			document.removeEventListener("mouseup", mouseup);
 			var end_time = performance.now();
 			var end_meta = this.get_mouse_target(e2);
-			console.log(end_time - start_time);
 			if(end_time - start_time < 200 || end_meta.atom == start_meta.atom) {
 				if(this.client.connection)
 					this.client.connection.send(JSON.stringify({"click_on":Object.assign({}, start_meta, {atom: start_meta && start_meta.atom && start_meta.atom.network_id})}));

@@ -97,10 +97,9 @@ class Eye {
 
 	handle_mousedown(e) {
 		e.preventDefault();
-		
+
 		// swapping hands with middle click
 		if(e.button == 1) { // middle mouse button
-			console.log(Math.random());
 			if(this.client.connection)
 				this.client.connection.send(JSON.stringify({"swap_hands": true}));
 			return;

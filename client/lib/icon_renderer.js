@@ -33,7 +33,8 @@ class IconRenderer {
 	get_bounds() {
 		if(!this.dir_meta || !this.icon_meta || !this.icon_state_meta)
 			return;
-		return {x:this.offset_x,y:1-(this.icon_state_meta.height/32)+this.offset_y,width:this.icon_state_meta.width/32,height:this.icon_state_meta.height/32};
+		let offset = this.get_offset();
+		return {x:offset[0],y:1-(this.icon_state_meta.height/32)+offset[1],width:this.icon_state_meta.width/32,height:this.icon_state_meta.height/32};
 	}
 
 	on_render_tick(timestamp) {
@@ -145,16 +146,18 @@ class IconRenderer {
 			image = color_canvas;
 			frame_meta = {x:0, y:0};
 		}
+		let offset = this.get_offset();
 
 		ctx.drawImage(image, frame_meta.x, frame_meta.y, this.icon_state_meta.width, this.icon_state_meta.height,
-			Math.round(this.offset_x * 32), Math.round(-this.offset_y * 32), this.icon_state_meta.width, this.icon_state_meta.height);
+			Math.round(offset[0] * 32), Math.round(-offset[1] * 32), this.icon_state_meta.width, this.icon_state_meta.height);
 	}
 
 	is_mouse_over(x, y) {
 		if(!this.icon_meta || !this.dir_meta || !this.icon_meta.__image_data)
 			return false;
-		x -= this.offset_x;
-		y -= this.offset_y;
+		let offset = this.get_offset();
+		x -= offset[0];
+		y -= offset[1];
 		var pxx = Math.floor(x*32);
 		var pxy = Math.floor(32-y*32);
 		var frame_meta = this.dir_meta.frames[this.icon_frame >= 0 && this.icon_frame < this.dir_meta.frames.length ? this.icon_frame : 0];
@@ -252,6 +255,23 @@ class IconRenderer {
 		this._offset_y = +val || 0;
 		if(this.atom)
 			this.atom.mark_dirty();
+	}
+
+	get_offset() {
+		let dx = this.offset_x;
+		let dy = this.offset_y;
+		if(this.icon_state_meta && this.icon_state_meta.directional_offset) {
+			let world_amt = this.icon_state_meta.directional_offset / 32;
+			if(this.dir & 1)
+				dy += world_amt;
+			if(this.dir & 2)
+				dy -= world_amt;
+			if(this.dir & 4)
+				dx += world_amt;
+			if(this.dir & 8)
+				dx -= world_amt;
+		}
+		return [dx, dy];
 	}
 
 	get color() {return this._color;}

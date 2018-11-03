@@ -49,6 +49,10 @@ class Eye {
 		dispy = Math.round(dispy*32)/32;
 		return [(x-dispx+7)*32, -(y-dispy-7)*32];
 	}
+	screen_to_world(x, y, timestamp) {
+		let {dispx, dispy} = (this.origin && this.origin.get_displacement && this.origin.get_displacement(timestamp)) || {dispx:0,dispy:0};
+		return [(x/32-7+dispx), (-y/32+8+dispy)];
+	}
 	create_click_handlers() {
 		this.canvas.addEventListener("mousedown", this.handle_mousedown.bind(this));
 	}
@@ -90,9 +94,8 @@ class Eye {
 			if(clickedAtom)
 				break;
 		}
-		if(!clickedAtom)
-			return;
-		return {"atom":clickedAtom,"x":localX,"y":localY, "ctrlKey": e.ctrlKey, "shiftKey": e.shiftKey, "altKey": e.altKey, "button": e.button};
+		let [world_x, world_y] = this.screen_to_world(clickX, clickY, timestamp);
+		return {"atom":clickedAtom,"x":localX,"y":localY, "ctrlKey": e.ctrlKey, "shiftKey": e.shiftKey, "altKey": e.altKey, "button": e.button, world_x, world_y};
 	}
 
 	handle_mousedown(e) {

@@ -253,7 +253,7 @@ BluespessClient.chain_func = function(func1, func2) {
 	return chained_func;
 },
 
-BluespessClient.dropdown = function(elem1, elem2, {point = null} = {}) {
+BluespessClient.dropdown = function(elem1, elem2, {point = null, autoremove = true} = {}) {
 	let rect;
 	if(point) {
 		rect = {x: point[0], y: point[1], width: 0, height: 0, left: point[0], right: point[0], top: point[1], bottom: point[1]};
@@ -295,20 +295,23 @@ BluespessClient.dropdown = function(elem1, elem2, {point = null} = {}) {
 		elem2.style.minWidth = rect.width + "px";
 	}
 
-	elem2.tabIndex = -1;
-	if(!elem2.dataset.hasDropdownFocusoutListener) {
-		elem2.dataset.hasDropdownFocusoutListener = true;
-		elem2.addEventListener("focusout", () => {
-			setTimeout(() => {
-				if(elem2 != document.activeElement && !elem2.contains(document.activeElement) && elem1.contains(elem2)) {
-					elem1.removeChild(elem2);
-				}
-			}, 0);
-		});
+	if(autoremove) {
+		elem2.tabIndex = -1;
+		if(!elem2.dataset.hasDropdownFocusoutListener) {
+			elem2.dataset.hasDropdownFocusoutListener = true;
+			elem2.addEventListener("focusout", () => {
+				setTimeout(() => {
+					if(elem2 != document.activeElement && !elem2.contains(document.activeElement) && elem1.contains(elem2)) {
+						elem1.removeChild(elem2);
+					}
+				}, 0);
+			});
+		}
 	}
 
 	elem2.style.visibility = "";
-	elem2.focus();
+	if(autoremove)
+		elem2.focus();
 };
 
 BluespessClient.prototype.enqueue_icon_meta_load = require('./lib/icon_loader.js');

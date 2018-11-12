@@ -1,9 +1,11 @@
 'use strict';
 const IconRenderer = require('./icon_renderer.js');
 const Matrix = require('./matrix.js');
+const EventEmitter = require('events');
 
-class Atom {
+class Atom extends EventEmitter {
 	constructor(client, instobj = {}) {
+		super();
 		if(!instobj.hasOwnProperty('x'))
 			instobj.x = 0;
 		if(!instobj.hasOwnProperty('y'))

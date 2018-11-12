@@ -1,8 +1,10 @@
 'use strict';
 const Atom = require('./atom.js');
+const EventEmitter = require('events');
 
-class Eye {
+class Eye extends EventEmitter {
 	constructor(client, id) {
+		super();
 		this.client = client;
 		this.id = id;
 		this.planes = new Map();
@@ -18,6 +20,9 @@ class Eye {
 				this.atoms.add(atom);
 			}
 		}
+
+		this.mouse_over_atom = null;
+		this.last_mouse_event = null;
 
 		this.origin = {x:0, y:0, glide_size: 10, update_glide: Atom.prototype.update_glide, client: this.client, get_displacement: Atom.prototype.get_displacement};
 	}
@@ -42,6 +47,8 @@ class Eye {
 		for(let plane of [...this.planes.values()].sort((a, b) => {return a.z_index - b.z_index;})) {
 			plane.draw(ctx, timestamp);
 		}
+		if(this.last_mouse_event)
+			this.handle_mousemove(this.last_mouse_event, timestamp);
 	}
 	get_world_draw_pos(x, y, timestamp) {
 		let {dispx, dispy} = (this.origin && this.origin.get_displacement && this.origin.get_displacement(timestamp)) || {dispx:0,dispy:0};
@@ -55,20 +62,26 @@ class Eye {
 	}
 	create_click_handlers() {
 		this.canvas.addEventListener("mousedown", this.handle_mousedown.bind(this));
+		this.canvas.addEventListener("mouseover", this.handle_mouseout.bind(this));
+		this.canvas.addEventListener("mousemove", this.handle_mousemove.bind(this));
+		this.canvas.addEventListener("mouseout", this.handle_mouseout.bind(this));
 	}
-	get_mouse_target(e) {
+	get_mouse_target(e, timestamp = performance.now()) {
 		var rect = e.target.getBoundingClientRect();
 		var clickX = (e.clientX - rect.left) / rect.width * e.target.width;
 		var clickY = (e.clientY - rect.top) / rect.height * e.target.height;
 		// Iterate through the atoms from top to bottom.
 		var clickedAtom;
-		let timestamp = performance.now();
 		for(let plane of [...this.planes.values()].sort((a, b) => {return b.z_index - a.z_index;})) {
 			if(plane.no_click)
 				continue;
 			let [originx, originy] = plane.calculate_origin(timestamp);
 			let [offsetx, offsety] = plane.calculate_composite_offset(timestamp);
-			for(let atom of [...plane.atoms].sort((a,b) => {return Atom.atom_comparator(b,a);})) {
+			let loc = `[${Math.floor((clickX-offsetx)/32+originx)},${Math.floor((-clickY+plane.canvas.height+offsety)/32+originy)}]`;
+			let tile = plane.tiles.get(loc);
+			if(!tile)
+				continue; //there's nothing there.
+			for(let atom of [...tile].sort((a,b) => {return Atom.atom_comparator(b,a);})) {
 				if(atom.mouse_opacity == undefined) {
 					atom.mouse_opacity = 1;
 				}
@@ -122,6 +135,47 @@ class Eye {
 		};
 		document.addEventListener("mouseup", mouseup);
 	}
+
+	handle_mouseover(e) {
+		this.last_mouse_event = e;
+		let meta = this.get_mouse_target(e);
+		let old = this.mouse_over_atom;
+		if(this.mouse_over_atom)
+			this.mouse_over_atom.emit("mouseout");
+		this.mouse_over_atom = meta.atom;
+		if(this.mouse_over_atom) {
+			this.mouse_over_atom.emit("mouseover", Object.assign(meta, {original_event: e}));
+			this.emit("mouse_over_atom_changed", old, this.mouse_over_atom);
+		}
+	}
+	handle_mouseout() {
+		let old = this.mouse_over_atom;
+		if(this.mouse_over_atom) {
+			this.mouse_over_atom.emit("mouseout");
+		}
+		this.mouse_over_atom = null;
+		this.last_mouse_event = null;
+		if(old)
+			this.emit("mouse_over_atom_changed", old, null);
+	}
+
+	handle_mousemove(e, timestamp = performance.now()) {
+		this.last_mouse_event = e;
+		let meta = this.get_mouse_target(e, timestamp);
+		if(meta.atom != this.mouse_over_atom) {
+			if(this.mouse_over_atom)
+				this.mouse_over_atom.emit("mouseout");
+			let old = this.mouse_over_atom;
+			this.mouse_over_atom = meta.atom;
+			if(this.mouse_over_atom) {
+				this.mouse_over_atom.emit("mouseover", Object.assign(meta, {original_event: e}));
+			}
+			this.emit("mouse_over_atom_changed", old, this.mouse_over_atom);
+		} else {
+			if(this.mouse_over_atom)
+				this.mouse_over_atom.emit("mousemove", Object.assign(meta, {original_event: e}));
+		}
+	}
 }
 
 class Plane {
@@ -133,6 +187,7 @@ class Plane {
 		this.atoms = new Set();
 		this.dirty_atoms = new Set();
 		this.last_draw = new Map();
+		this.tiles = new Map();
 		this.eye = eye;
 		this.client = eye.client;
 		this.id = id;
@@ -186,6 +241,14 @@ class Plane {
 		for(let [atom, lastbounds] of this.last_draw) {
 			let dirty = false;
 			if(!this.atoms.has(atom)) {
+				for(let x = Math.floor(lastbounds.x); x < Math.ceil(lastbounds.x + lastbounds.width); x++) {
+					for(let y = Math.floor(lastbounds.y); y < Math.ceil(lastbounds.y + lastbounds.height); y++) {
+						let loc = `[${x},${y}]`;
+						let set = this.tiles.get(loc);
+						if(set)
+							set.delete(atom);
+					}
+				}
 				this.last_draw.delete(atom);
 				dirty = true;
 			} else {
@@ -198,8 +261,23 @@ class Plane {
 					newbounds.y += dispy;
 					newbounds.transform = atom.get_transform(timestamp);
 					if(newbounds.x != lastbounds.x || newbounds.y != lastbounds.y || newbounds.width != lastbounds.width || newbounds.height != lastbounds.height || !newbounds.transform.equals(lastbounds.transform)) {
+						for(let x = Math.floor(lastbounds.x); x < Math.ceil(lastbounds.x + lastbounds.width); x++) {
+							for(let y = Math.floor(lastbounds.y); y < Math.ceil(lastbounds.y + lastbounds.height); y++) {
+								let loc = `[${x},${y}]`;
+								let set = this.tiles.get(loc);
+								if(set)
+									set.delete(atom);
+							}
+						}
 						for(let x = Math.floor(newbounds.x); x < Math.ceil(newbounds.x + newbounds.width); x++) {
 							for(let y = Math.floor(newbounds.y); y < Math.ceil(newbounds.y + newbounds.height); y++) {
+								let loc = `[${x},${y}]`;
+								let set = this.tiles.get(loc);
+								if(!set) {
+									set = new Set();
+									this.tiles.set(loc, set);
+								}
+								set.add(atom);
 								dirty_tiles.add(`[${x},${y}]`);
 							}
 						}
@@ -207,6 +285,14 @@ class Plane {
 						dirty = true;
 					}
 				} else {
+					for(let x = Math.floor(lastbounds.x); x < Math.ceil(lastbounds.x + lastbounds.width); x++) {
+						for(let y = Math.floor(lastbounds.y); y < Math.ceil(lastbounds.y + lastbounds.height); y++) {
+							let loc = `[${x},${y}]`;
+							let set = this.tiles.get(loc);
+							if(set)
+								set.delete(atom);
+						}
+					}
 					this.last_draw.delete(atom);
 					dirty = true;
 				}
@@ -221,8 +307,13 @@ class Plane {
 		}
 
 		for(let atom of this.atoms) {
-			if(!this.dirty_atoms.has(atom) && this.last_draw.has(atom))
-				continue;
+			let add_to_tiles = false;
+			if(this.last_draw.has(atom)) {
+				if(!this.dirty_atoms.has(atom))
+					continue;
+			} else {
+				add_to_tiles = true;
+			}
 			let bounds = atom.get_transformed_bounds(timestamp);
 			if(!bounds)
 				continue;
@@ -234,7 +325,16 @@ class Plane {
 			bounds.transform = atom.get_transform(timestamp);
 			for(let x = Math.floor(bounds.x); x < Math.ceil(bounds.x + bounds.width); x++) {
 				for(let y = Math.floor(bounds.y); y < Math.ceil(bounds.y + bounds.height); y++) {
-					dirty_tiles.add(`[${x},${y}]`);
+					let loc = `[${x},${y}]`;
+					if(add_to_tiles) {
+						let set = this.tiles.get(loc);
+						if(!set) {
+							set = new Set();
+							this.tiles.set(loc, set);
+						}
+						set.add(atom);
+					}
+					dirty_tiles.add(loc);
 				}
 			}
 			this.last_draw.set(atom, bounds);

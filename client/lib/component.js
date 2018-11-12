@@ -1,7 +1,9 @@
 'use strict';
+const EventEmitter = require('events');
 
-class Component {
+class Component extends EventEmitter {
 	constructor(atom, template) {
+		super();
 		if(template) {
 			Object.assign(this, template);
 		}

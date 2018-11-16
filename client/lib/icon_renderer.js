@@ -274,7 +274,11 @@ class IconRenderer {
 		return [dx, dy];
 	}
 
-	get color() {return this._color;}
+	get color() {
+		if(this._color == null && this.parent)
+			return this.parent.color;
+		return this._color;
+	}
 	set color(val) {
 		if(val == this._color)
 			return;

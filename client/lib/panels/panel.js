@@ -226,7 +226,7 @@ class Panel extends EventEmitter {
 function build_message(path, val) {
 	let obj = {};
 	let ret_obj = obj;
-	let split = path.split(/\./g);
+	let split = path.split(/./g);
 	for(let i = 0; i < (split.length - 1); i++) {
 		obj[split[i]] = (obj = {});
 	}

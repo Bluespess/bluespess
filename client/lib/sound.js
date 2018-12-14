@@ -59,6 +59,8 @@ class Sound {
 	}
 
 	start() {
+		if(!this.client.audio_ctx)
+			return;
 		this.buffer_promise.then((buf) => {
 			if(!this.source)
 				return;

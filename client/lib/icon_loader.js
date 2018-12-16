@@ -10,6 +10,29 @@ function enqueue_icon_meta_load(newIcon) {
 		xhr.responseType = "json";
 		xhr.onload = () => {
 			var meta = xhr.response;
+			let default_meta = false;
+			if(!meta) {
+				default_meta = true;
+				meta = {
+					"": {
+						"dir_count": 1,
+						"width": 32,
+						"height": 32,
+						"dirs": {
+							"2": {
+								"frames": [
+									{
+										"x": 0,
+										"y": 0,
+										"delay": 500
+									}
+								]
+							}
+						},
+						"tile_size": 32
+					}
+				};
+			}
 			for(var statekey in meta) {
 				if(!meta.hasOwnProperty(statekey)) {
 					continue;
@@ -38,14 +61,17 @@ function enqueue_icon_meta_load(newIcon) {
 				canvas.height = meta.__image_object.height;
 				ctx.drawImage(meta.__image_object, 0, 0);
 				meta.__image_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
+				if(default_meta) {
+					meta[""].width = meta.__image_object.width;
+					meta[""].height = meta.__image_object.height;
+				}
 				resolve();
 				this.icon_meta_load_queue[newIcon] = undefined;
 			});
+			meta.__image_object.addEventListener("error", (error) => {
+				reject(error || new Error(`Loading failed for ${newIcon}`));
+			});
 			this.icon_metas[newIcon] = meta;
-		};
-		xhr.onerror = (error) => {
-			reject(error || new Error(`Loading failed`));
 		};
 		xhr.send();
 	});

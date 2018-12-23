@@ -10,6 +10,7 @@ class LightingObject extends Component {
 		this.atom.is_mouse_over = ()=>{return false;};
 		this.atom.get_plane_id = ()=>{return "lighting";};
 		this.canvas = document.createElement("canvas");
+		this.random_angle_offset = Math.random();
 
 		this.soft_shadow_radius = 1/8;
 	}
@@ -23,6 +24,9 @@ class LightingObject extends Component {
 		} else if(this.shadows_list != this.last_shadows_list) {
 			this.dirty = true;
 		} else if(!this.last_disp || this.last_disp.dispx != disp.dispx || this.last_disp.dispy != disp.dispy) {
+			this.dirty = true;
+		} else if(this.a.client.soft_shadow_resolution != this.last_resolution) {
+			this.random_angle_offset = Math.random();
 			this.dirty = true;
 		}
 		if(this.dirty)
@@ -43,6 +47,7 @@ class LightingObject extends Component {
 			return;
 
 		if(this.dirty) {
+			this.last_resolution = this.a.client.soft_shadow_resolution;
 			this.canvas.width = 32+(this.radius*64);
 			this.canvas.height = 32+(this.radius*64);
 			var bctx = this.canvas.getContext('2d');
@@ -62,7 +67,7 @@ class LightingObject extends Component {
 				sample_points.push([dispx, dispy]);
 			} else {
 				for(let i = 0; i < this.a.client.soft_shadow_resolution; i++) {
-					let angle = i * Math.PI * 2 / this.a.client.soft_shadow_resolution;
+					let angle = (i + this.random_angle_offset) * Math.PI * 2 / this.a.client.soft_shadow_resolution;
 					sample_points.push([dispx + Math.cos(angle) * this.soft_shadow_radius, dispy + Math.sin(angle) * this.soft_shadow_radius]);
 				}
 			}

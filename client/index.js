@@ -29,6 +29,7 @@ class BluespessClient extends EventEmitter {
 		this.server_time_to_client;
 		this.audio_buffers = new Map();
 		this.playing_sounds = new Map();
+		this.init_rendering();
 
 		this.soft_shadow_resolution = 8;
 
@@ -317,7 +318,8 @@ BluespessClient.dropdown = function(elem1, elem2, {point = null, autoremove = tr
 };
 
 BluespessClient.prototype.enqueue_icon_meta_load = require('./lib/icon_loader.js');
-BluespessClient.prototype.anim_loop = require('./lib/renderer.js');
+BluespessClient.prototype.anim_loop = require('./lib/renderer.js').anim_loop;
+BluespessClient.prototype.init_rendering = require('./lib/renderer.js').init_rendering;
 BluespessClient.prototype.get_audio_buffer = require('./lib/audio_loader.js');
 
 BluespessClient.Atom = Atom;

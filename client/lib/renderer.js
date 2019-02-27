@@ -14,4 +14,9 @@ function anim_loop(timestamp) {
 	requestAnimationFrame(anim_loop.bind(this));
 }
 
-module.exports = anim_loop;
+function init_rendering() {
+	this.gl = document.createElement("canvas").getContext("webgl");
+
+}
+
+module.exports = {anim_loop, init_rendering};

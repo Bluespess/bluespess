@@ -29,7 +29,6 @@ function init_rendering() {
 			return `if(v_tex_index < ${split_point+s}.0){${build_texture_switch(s, split_point)}}else{${build_texture_switch(s+split_point, l-split_point)}}`;
 		}
 	}(0, this.max_icons_per_batch)); // it would be so much easier if I could just index the goddamn array normally but no they had to be fuckers and now I have this super convoluted if/else tree god damn it glsl why you do this to me
-	console.log(texture_switch);
 	this.shader_default = this.compile_shader_program(`
 precision mediump float;
 attribute vec2 a_position;

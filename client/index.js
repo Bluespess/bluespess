@@ -7,6 +7,7 @@ const Component = require('./lib/component.js');
 const EventEmitter = require('events');
 const Sound = require('./lib/sound.js');
 const Matrix = require('./lib/matrix.js');
+const DrawBatch = require('./lib/draw_batch.js');
 const {Eye, Plane} = require('./lib/eye.js');
 
 class BluespessClient extends EventEmitter {
@@ -329,5 +330,6 @@ BluespessClient.Matrix = Matrix;
 
 BluespessClient.Eye = Eye;
 BluespessClient.Plane = Plane;
+BluespessClient.DrawBatch = DrawBatch;
 
 module.exports = BluespessClient;

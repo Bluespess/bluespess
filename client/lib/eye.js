@@ -1,6 +1,7 @@
 'use strict';
 const Atom = require('./atom.js');
 const EventEmitter = require('events');
+const Matrix = require('./matrix.js');
 
 class Eye extends EventEmitter {
 	constructor(client, id) {
@@ -24,6 +25,7 @@ class Eye extends EventEmitter {
 		this.mouse_over_atom = null;
 		this.last_mouse_event = null;
 
+		this.tile_size = [15,15];
 		this.origin = {x:0, y:0, glide_size: 10, update_glide: Atom.prototype.update_glide, client: this.client, get_displacement: Atom.prototype.get_displacement};
 	}
 
@@ -49,6 +51,47 @@ class Eye extends EventEmitter {
 		}
 		if(this.last_mouse_event)
 			this.handle_mousemove(this.last_mouse_event, timestamp);
+	}
+	draw_gl(timestamp) {
+		if(!this.canvas)
+			return;
+		const gl = this.client.gl;
+		gl.canvas.width = Math.max(gl.canvas.width, this.canvas.width);
+		gl.canvas.height = Math.max(gl.canvas.height, this.canvas.height);
+		gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+		gl.clearColor(0,0,0,0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+		this.client.gl_viewport_tile_size = this.tile_size;
+		let {dispx, dispy} = (this.origin && this.origin.get_displacement && this.origin.get_displacement(timestamp)) || {dispx:0,dispy:0};
+		this.client.gl_world_origin = [dispx,dispy];
+
+		this.draw_gl_content(Matrix.identity, timestamp);
+
+		gl.finish();
+		let ctx = this.canvas.getContext('2d');
+		ctx.globalCompositeOperation = "copy";
+		ctx.drawImage(gl.canvas, 0, 0);
+
+		if(this.last_mouse_event)
+			this.handle_mousemove(this.last_mouse_event, timestamp);
+	}
+	draw_gl_content(transform, timestamp) {
+		// canvases aren't necessary here, in case you want to direct-draw from one eye onto another ()
+		for(let atom of this.atoms) {
+			atom.on_render_tick(timestamp);
+			let last_plane = this.last_planes.get(atom);
+			let plane = atom.get_plane();
+			if(last_plane != plane) {
+				if(last_plane)
+					last_plane.atoms.delete(atom);
+				if(plane)
+					plane.atoms.add(atom);
+				this.last_planes.set(atom, plane);
+			}
+		}
+		for(let plane of [...this.planes.values()].sort((a, b) => {return a.z_index - b.z_index;})) {
+			plane.draw_gl(transform, timestamp);
+		}
 	}
 	get_world_draw_pos(x, y, timestamp) {
 		let {dispx, dispy} = (this.origin && this.origin.get_displacement && this.origin.get_displacement(timestamp)) || {dispx:0,dispy:0};
@@ -399,6 +442,10 @@ class Plane {
 		ctx.drawImage(this.draw_canvas, 0, 0);
 
 		this.client.emit("after_draw", ctx, timestamp);
+	}
+
+	draw_gl(/*transform, timestamp*/) {
+
 	}
 
 	calculate_origin() {

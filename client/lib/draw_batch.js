@@ -2,39 +2,79 @@
 
 class DrawBatch {
 	constructor(client) {
-		this.icon_list = [];
+		this.icon_list = ["internal/lighting"];
 		this.num_vertices = 0;
 		this.client = client;
 		this.init_buffers();
+		this.program = this.client.shader_default;
 	}
 
 	init_buffers() {
 		let gl = this.client.gl;
 		this.buffers = {
-			vertices: {buf: new Float32Array(2048), size: 2, attrib: "a_position", gl_buf: null, gl_pos: null, type: gl.FLOAT},
-			uv: {buf: new Float32Array(2048), size: 2, attrib: "a_uv", gl_buf: null, gl_pos: null, type: gl.FLOAT},
-			colors: {buf: new Float32Array(4096), size: 4, attrib: "a_color", gl_buf: null, gl_pos: null, type: gl.FLOAT},
-			texture_indices: {buf: new Uint8Array(1024), size: 1, attrib: "a_tex_index", gl_buf: null, gl_pos: null, type: gl.UNSIGNED_BYTE},
-			attrib_bits: {buf: new Uint8Array(1024), size: 1, attrib: "a_properties", gl_buf: null, gl_pos: null, type: gl.UNSIGNED_BYTE},
+			vertices:        {buf: new Float32Array(2048), size: 2, attrib: "a_position",   gl_buf: null, gl_pos: null, type: gl.FLOAT},
+			uv:              {buf: new Float32Array(2048), size: 2, attrib: "a_uv",         gl_buf: null, gl_pos: null, type: gl.FLOAT},
+			colors:          {buf: new Float32Array(4096), size: 4, attrib: "a_color",      gl_buf: null, gl_pos: null, type: gl.FLOAT},
+			texture_indices: {buf: new Uint8Array(1024),   size: 1, attrib: "a_tex_index",  gl_buf: null, gl_pos: null, type: gl.UNSIGNED_BYTE},
+			attrib_bits:     {buf: new Uint8Array(1024),   size: 1, attrib: "a_properties", gl_buf: null, gl_pos: null, type: gl.UNSIGNED_BYTE},
 		};
 		this.max_vertices = 1024;
+	}
+
+	bind_textures() {
+		const gl = this.client.gl;
+		for(let i = 0; i < this.icon_list.length; i++) {
+			let uniform_loc = gl.getUniformLocation(this.program, `u_texture[${i}]`);
+			gl.uniform1i(uniform_loc, i);
+			gl.activeTexture(gl.TEXTURE0 + i);
+			gl.bindTexture(gl.TEXTURE_2D, this.client.get_texture(this.icon_list[i]));
+		}
+	}
+
+	can_fit(num_verts, textures) {
+		if(this.num_vertices + num_verts > this.max_vertices)
+			return false;
+		if(typeof textures == "string") {
+			if(this.icon_list.includes(textures))
+				return true;
+			if(this.icon_list.length < this.client.max_icons_per_batch)
+				return true;
+			return false;
+		}
+		let num_textures = this.icon_list;
+		for(let texture of textures) {
+			if(!this.icon_list.includes(texture))
+				num_textures++;
+		}
+		if(num_textures > this.client.max_icons_per_batch)
+			return false;
+		return true;
+	}
+
+	assign_uniforms() {
+		const gl = this.client.gl;
+		let viewport = gl.getParameter(gl.VIEWPORT);
+		gl.uniform2f(gl.getUniformLocation(this.program, "u_viewport_size"), viewport[2], viewport[3]);
+		gl.uniform2f(gl.getUniformLocation(this.program, "u_viewport_tile_size"), this.client.gl_viewport_tile_size);
+		gl.uniform2f(gl.getUniformLocation(this.program, "u_world_origin"), this.client.gl_world_origin);
 	}
 
 	draw() {
 		if(!this.num_vertices)
 			return;
 		let gl = this.client.gl;
-		let program = this.client.shader_default;
-		gl.useProgram(program);
+		gl.useProgram(this.program);
+		this.bind_textures();
+		this.assign_uniforms();
 		for(let obj of Object.values(this.buffers)) {
 			let gl_buffer = obj.gl_buf = gl.createBuffer();
-			gl.bindBuffer(gl_buffer);
-			gl.bufferData(gl.ARRAY_BUFFER, new obj.buf.constructor(obj.buf.buffer, 0, this.num_vertices * obj.size), gl.STREAM_DRAW);
-			let gl_pos = obj.gl_pos = gl.getAttribLocation(program, obj.attrib);
+			gl.bindBuffer(gl.ARRAY_BUFFER, gl_buffer);
+			gl.bufferData(gl.ARRAY_BUFFER, obj.buf.subarray(0, this.num_vertices * obj.size), gl.STREAM_DRAW);
+			let gl_pos = obj.gl_pos = gl.getAttribLocation(this.program, obj.attrib);
 			gl.vertexAttribPointer(gl_pos, obj.size, obj.type, false, 0, 0);
-			gl.enableVertexAttribArray(gl_buffer);
+			gl.enableVertexAttribArray(gl_pos);
 		}
-		gl.drawArrays();
+		gl.drawArrays(gl.TRIANGLES, 0, this.num_vertices);
 		for(let obj of Object.values(this.buffers)) {
 			gl.deleteBuffer(obj.gl_buf);
 			obj.gl_buf = null;

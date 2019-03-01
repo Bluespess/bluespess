@@ -1,5 +1,6 @@
 'use strict';
 const dir_progressions = require('./dir_progressions.js');
+const DrawBatch = require('./draw_batch.js');
 
 const CHANGE_LEVEL_NONE = 0;
 const CHANGE_LEVEL_DIR = 1;
@@ -150,6 +151,48 @@ class IconRenderer {
 
 		ctx.drawImage(image, frame_meta.x, frame_meta.y, this.icon_state_meta.width, this.icon_state_meta.height,
 			Math.round(offset[0] * 32), Math.round(-offset[1] * 32), this.icon_state_meta.width, this.icon_state_meta.height);
+	}
+
+	draw_gl(transform) {
+		if(!this.dir_meta || !this.icon_meta || !this.icon_meta.__image_object)
+			return;
+		if(!this.client.gl_current_batch || this.client.gl_current_batch.constructor != DrawBatch || !this.client.gl_current_batch.can_fit(6, this.icon)) {
+			if(this.client.gl_current_batch)
+				this.client.gl_current_batch.draw();
+			this.client.gl_current_batch = new DrawBatch(this.client);
+		}
+		let icon = this.icon;
+		let batch = this.client.gl_current_batch;
+		let image = this.icon_meta.__image_object;
+		var frame_meta = this.dir_meta.frames[this.icon_frame >= 0 && this.icon_frame < this.dir_meta.frames.length ? this.icon_frame : 0];
+		let texture_index = batch.icon_list.indexOf(icon);
+		let attrib_bits = (+this.client.gl_world_space * 1);
+		if(texture_index == -1) {
+			texture_index = batch.icon_list.length;
+			batch.icon_list.push(icon);
+		}
+
+		let world_width = this.icon_state_meta.width / this.icon_state_meta.tile_size;
+		let world_height = this.icon_state_meta.height / this.icon_state_meta.tile_size;
+		let offset = this.get_offset();
+		let ox = Math.round(offset[0] * 32)/32;
+		let oy = Math.round(offset[1] * 32)/32;
+		for(let ia = 0; ia < 2; ia++) for(let ib = 0; ib < 3; ib++) { // iterates in ther order 0,1,2,1,2,3
+			let i = ia + ib;
+			let sx = (i & 1);
+			let sy = (i & 2) >> 1;
+			let vertex_num = batch.num_vertices;
+			batch.buffers.texture_indices.buf[vertex_num] = texture_index;
+			batch.buffers.attrib_bits.buf[vertex_num] = attrib_bits;
+			batch.buffers.vertices.buf.set(transform.multiply([ox+sx*world_width,oy+sy*world_height]),vertex_num*2);
+			batch.buffers.uv.buf[vertex_num * 2] = (frame_meta.x + (sx*this.icon_state_meta.width)) / image.width;
+			batch.buffers.uv.buf[vertex_num * 2 + 1] = (frame_meta.y + (sy*this.icon_state_meta.height)) / image.height;
+			batch.buffers.colors.buf[vertex_num*4] = 1;
+			batch.buffers.colors.buf[vertex_num*4+1] = 1;
+			batch.buffers.colors.buf[vertex_num*4+2] = 1;
+			batch.buffers.colors.buf[vertex_num*4+3] = 1;
+			batch.num_vertices++;
+		}
 	}
 
 	is_mouse_over(x, y) {

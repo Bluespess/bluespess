@@ -163,9 +163,6 @@ class Atom extends EventEmitter {
 	}
 
 	draw(ctx, timestamp) {
-		for(let overlay of this.overlay_renderers_list) {
-			overlay.draw(ctx, timestamp);
-		}
 		var i;
 		for(i = 0; i < this.overlay_renderers_list.length; i++) {
 			let overlay = this.overlay_renderers_list[i];
@@ -177,6 +174,21 @@ class Atom extends EventEmitter {
 		for(;i < this.overlay_renderers_list.length; i++) {
 			let overlay = this.overlay_renderers_list[i];
 			overlay.draw(ctx, timestamp);
+		}
+	}
+
+	draw_gl(transform, timestamp) {
+		let i;
+		for(i = 0; i < this.overlay_renderers_list.length; i++) {
+			let overlay = this.overlay_renderers_list[i];
+			if(overlay.overlay_layer >= 0)
+				break;
+			overlay.draw_gl(transform, timestamp);
+		}
+		this.main_icon_renderer.draw_gl(transform, timestamp);
+		for(;i < this.overlay_renderers_list.length; i++) {
+			let overlay = this.overlay_renderers_list[i];
+			overlay.draw_gl(transform, timestamp);
 		}
 	}
 

@@ -7,6 +7,10 @@ class DrawBatch {
 		this.client = client;
 		this.init_buffers();
 		this.program = this.client.shader_default;
+		if(this.client.gl_current_batch) {
+			throw new Error(`GL batch already exists`);
+		}
+		this.client.gl_current_batch = this;
 	}
 
 	init_buffers() {
@@ -55,13 +59,16 @@ class DrawBatch {
 		const gl = this.client.gl;
 		let viewport = gl.getParameter(gl.VIEWPORT);
 		gl.uniform2f(gl.getUniformLocation(this.program, "u_viewport_size"), viewport[2], viewport[3]);
-		gl.uniform2f(gl.getUniformLocation(this.program, "u_viewport_tile_size"), this.client.gl_viewport_tile_size);
-		gl.uniform2f(gl.getUniformLocation(this.program, "u_world_origin"), this.client.gl_world_origin);
+		gl.uniform2fv(gl.getUniformLocation(this.program, "u_viewport_tile_size"), this.client.gl_viewport_tile_size);
+		gl.uniform2fv(gl.getUniformLocation(this.program, "u_world_origin"), this.client.gl_world_origin);
 	}
 
 	draw() {
 		if(!this.num_vertices)
 			return;
+		if(this.client.gl_current_batch != this)
+			throw new Error(`Cannot draw non-active batch`);
+		this.client.gl_current_batch = null;
 		let gl = this.client.gl;
 		gl.useProgram(this.program);
 		this.bind_textures();

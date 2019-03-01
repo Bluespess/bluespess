@@ -52,7 +52,7 @@ void main() {
 	v_uv = a_uv;
 	v_tex_index = a_tex_index;
 	v_properties = a_properties;
-	gl_Position = vec4((a_position - (mod(a_properties, 2.0) > 0.5 ? u_world_origin-vec2(0.5,0.5) : u_viewport_tile_size/2)) / u_viewport_tile_size * 2, 0, 1);
+	gl_Position = vec4((a_position - (mod(a_properties, 2.0) > 0.5 ? (u_world_origin+vec2(0.5,0.5)) : (u_viewport_tile_size/2.0))) / u_viewport_tile_size * 2.0, 0.0, 1.0);
 }
 `,`
 precision mediump float;
@@ -74,6 +74,8 @@ void main() {     // fucking shit why is there no bitwise and
 
 	this.gl_world_origin = [0, 0];
 	this.gl_viewport_tile_size = [1, 1];
+	this.gl_world_space = true;
+	this.gl_current_batch = null;
 
 	this.gl_texture_cache = new Map();
 
@@ -116,6 +118,8 @@ function get_texture(key) {
 	}
 	if(this.icon_metas[key]) {
 		let img = this.icon_metas[key].__image_object;
+		if(!img || !img.complete)
+			return this.gl_white_texture;
 		let texture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, texture);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
@@ -123,7 +127,7 @@ function get_texture(key) {
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		this.gl_texture_cache.set(texture);
+		this.gl_texture_cache.set(key, texture);
 		return texture;
 	}
 	return this.gl_white_texture;

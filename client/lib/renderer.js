@@ -1,5 +1,4 @@
 'use strict';
-const DrawBatch = require('./draw_batch.js');
 
 function anim_loop(timestamp) {
 
@@ -74,41 +73,25 @@ void main() {     // fucking shit why is there no bitwise and
 
 	this.gl_world_origin = [0, 0];
 	this.gl_viewport_tile_size = [1, 1];
+	this.gl_viewport = [32, 32];
 	this.gl_world_space = true;
 	this.gl_current_batch = null;
 
 	this.gl_texture_cache = new Map();
+	this.gl_uniform_cache = new Map();
+
+	this.gl_uniform_cache.set(this.shader_default, {
+		u_viewport_size: gl.getUniformLocation(this.shader_default, "u_viewport_size"),
+		u_viewport_tile_size: gl.getUniformLocation(this.shader_default, "u_viewport_tile_size"),
+		u_world_origin: gl.getUniformLocation(this.shader_default, "u_world_origin")
+	});
 
 	this.gl_white_texture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, this.gl_white_texture);
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255,255,255,255]));
-	gl.canvas.width = 1024;
-	gl.canvas.height = 1024;
-	gl.viewport(0,0,1024,1024);
+
 	gl.enable(gl.BLEND);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-	(async () => {
-		let texes = ["internal/lighting", "icons/turf/floors.png", "icons/turf/walls/wall.png", "icons/turf/areas.png"];
-		for(let i = 1; i < texes.length; i++) {
-			if(!this.icon_metas[texes[i]])
-				await this.enqueue_icon_meta_load(texes[i]);
-		}
-		let b = new DrawBatch(this);
-		b.icon_list = texes;
-		for(let i = 0; i < 50; i++) {
-			b.buffers.vertices.buf.set([Math.random()*2-1,Math.random()*2-1,Math.random()*2-1,Math.random()*2-1,Math.random()*2-1,Math.random()*2-1], b.num_vertices * b.buffers.vertices.size);
-			//b.buffers.uv.buf.set([0.05, 0.05, 0.1, 0.05, 0.05, 0.1]);
-			b.buffers.uv.buf.set([Math.random(),Math.random(),Math.random(),Math.random(),Math.random(),Math.random()], b.num_vertices * b.buffers.uv.size);
-			//b.buffers.colors.buf.set([1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1]);
-			b.buffers.colors.buf.set([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], b.num_vertices * b.buffers.colors.size);
-			let tex = Math.floor(Math.random()*3)+1;
-			b.buffers.texture_indices.buf.set([tex,tex,tex], b.num_vertices * b.buffers.texture_indices.size);
-			b.buffers.attrib_bits.buf.set([0, 0, 0], b.num_vertices * b.buffers.vertices.size);
-			b.num_vertices += 3;
-		}
-		b.draw();
-	})();
 }
 
 function get_texture(key) {

@@ -1,6 +1,7 @@
 'use strict';
 const dir_progressions = require('./dir_progressions.js');
 const DrawBatch = require('./draw_batch.js');
+const parse_color = require('color-parser');
 
 const CHANGE_LEVEL_NONE = 0;
 const CHANGE_LEVEL_DIR = 1;
@@ -164,6 +165,8 @@ class IconRenderer {
 		let icon = this.icon;
 		let batch = this.client.gl_current_batch;
 		let image = this.icon_meta.__image_object;
+		let inv_img_width = 1/image.width;
+		let inv_img_height = 1/image.height;
 		var frame_meta = this.dir_meta.frames[this.icon_frame >= 0 && this.icon_frame < this.dir_meta.frames.length ? this.icon_frame : 0];
 		let texture_index = batch.icon_list.indexOf(icon);
 		let attrib_bits = (+this.client.gl_world_space * 1);
@@ -177,6 +180,9 @@ class IconRenderer {
 		let offset = this.get_offset();
 		let ox = Math.round(offset[0] * 32)/32;
 		let oy = Math.round(offset[1] * 32)/32;
+		let parsed_color = this.color ? parse_color(this.color) : null;
+		let alpha = this.alpha;
+		alpha = (alpha == null ? 1 : alpha);
 		for(let ia = 0; ia < 2; ia++) for(let ib = 0; ib < 3; ib++) { // iterates in ther order 0,1,2,1,2,3
 			let i = ia + ib;
 			let sx = (i & 1);
@@ -184,13 +190,22 @@ class IconRenderer {
 			let vertex_num = batch.num_vertices;
 			batch.buffers.texture_indices.buf[vertex_num] = texture_index;
 			batch.buffers.attrib_bits.buf[vertex_num] = attrib_bits;
-			batch.buffers.vertices.buf.set(transform.multiply([ox+sx*world_width,oy+sy*world_height]),vertex_num*2);
-			batch.buffers.uv.buf[vertex_num * 2] = (frame_meta.x + (sx*this.icon_state_meta.width)) / image.width;
-			batch.buffers.uv.buf[vertex_num * 2 + 1] = (frame_meta.y + (sy*this.icon_state_meta.height)) / image.height;
-			batch.buffers.colors.buf[vertex_num*4] = 1;
-			batch.buffers.colors.buf[vertex_num*4+1] = 1;
-			batch.buffers.colors.buf[vertex_num*4+2] = 1;
-			batch.buffers.colors.buf[vertex_num*4+3] = 1;
+			let transformed_coords = transform.multiply([ox+sx*world_width,oy+sy*world_height]);
+			batch.buffers.vertices.buf[(vertex_num<<1)] = transformed_coords[0];
+			batch.buffers.vertices.buf[(vertex_num<<1)+1] = transformed_coords[1];
+			batch.buffers.uv.buf[(vertex_num<<1)] = (frame_meta.x + (sx*this.icon_state_meta.width)) * inv_img_width;
+			batch.buffers.uv.buf[(vertex_num<<1) + 1] = (frame_meta.y + ((1-sy)*this.icon_state_meta.height)) * inv_img_height;
+			if(parsed_color) {
+				batch.buffers.colors.buf[(vertex_num<<2)] = parsed_color.r / 255;
+				batch.buffers.colors.buf[(vertex_num<<2)+1] = parsed_color.g / 255;
+				batch.buffers.colors.buf[(vertex_num<<2)+2] = parsed_color.b / 255;
+				batch.buffers.colors.buf[(vertex_num<<2)+3] = parsed_color.a * alpha;
+			} else {
+				batch.buffers.colors.buf[(vertex_num<<2)] = 1;
+				batch.buffers.colors.buf[(vertex_num<<2)+1] = 1;
+				batch.buffers.colors.buf[(vertex_num<<2)+2] = 1;
+				batch.buffers.colors.buf[(vertex_num<<2)+3] = 1 * alpha;
+			}
 			batch.num_vertices++;
 		}
 	}

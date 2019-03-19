@@ -45,19 +45,19 @@ class Matrix {
 	}
 
 	translate(dx = 0, dy) {
-		return this.multiply(new Matrix(1, 0, 0, 1, dx, dy));
+		return new Matrix(this.a, this.b, this.c, this.d, this.e+this.a*dx+this.c*dy, this.f+this.b*dx+this.d*dy);
 	}
 
 	rotate(angle, ox = 0, oy = 0) {
 		let c = Math.cos(angle);
 		let s = Math.sin(angle);
-		return this.translate(-ox, -oy).multiply(new Matrix(c, s, -s, c, 0, 0)).translate(ox, oy);
+		return this.translate(ox, oy).multiply(new Matrix(c, s, -s, c, 0, 0)).translate(-ox, -oy);
 	}
 
 	scale(sx, sy, ox = 0, oy = 0) {
 		if(sy == undefined)
 			sy = sx;
-		return this.translate(-ox, -oy).multiply(new Matrix(sx, 0, 0, sy, 0, 0)).translate(ox, oy);
+		return this.translate(ox, oy).multiply(new Matrix(sx, 0, 0, sy, 0, 0)).translate(-ox, -oy);
 	}
 
 	equals(other) {

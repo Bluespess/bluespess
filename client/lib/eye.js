@@ -56,12 +56,17 @@ class Eye extends EventEmitter {
 		if(!this.canvas)
 			return;
 		const gl = this.client.gl;
-		gl.canvas.width = Math.max(gl.canvas.width, this.canvas.width);
-		gl.canvas.height = Math.max(gl.canvas.height, this.canvas.height);
+		let max_width = Math.max(gl.canvas.width, this.canvas.width);
+		let max_height = Math.max(gl.canvas.height, this.canvas.height);
+		if(max_width != gl.canvas.width || max_height != gl.canvas.height) {
+			gl.canvas.width = max_width;
+			gl.canvas.height = max_height;
+		}
 		gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 		gl.clearColor(0,0,0,0);
-		//gl.clear(gl.COLOR_BUFFER_BIT);
+		gl.clear(gl.COLOR_BUFFER_BIT);
 		this.client.gl_viewport_tile_size = this.tile_size;
+		this.client.gl_viewport = [this.canvas.width,this.canvas.height];
 		let {dispx, dispy} = (this.origin && this.origin.get_displacement && this.origin.get_displacement(timestamp)) || {dispx:0,dispy:0};
 		dispx = Math.round(dispx*32)/32;
 		dispy = Math.round(dispy*32)/32;
@@ -69,7 +74,6 @@ class Eye extends EventEmitter {
 
 		this.draw_gl_content(Matrix.identity, timestamp);
 
-		gl.finish();
 		let ctx = this.canvas.getContext('2d');
 		ctx.globalCompositeOperation = "copy";
 		ctx.drawImage(gl.canvas, 0, gl.canvas.height - this.canvas.height);
@@ -120,6 +124,7 @@ class Eye extends EventEmitter {
 		for(let plane of [...this.planes.values()].sort((a, b) => {return b.z_index - a.z_index;})) {
 			if(plane.no_click)
 				continue;
+			plane.size_canvases(timestamp);
 			let [originx, originy] = plane.calculate_origin(timestamp);
 			let [offsetx, offsety] = plane.calculate_composite_offset(timestamp);
 			let loc = `[${Math.floor((clickX-offsetx)/32+originx)},${Math.floor((-clickY+plane.canvas.height+offsety)/32+originy)}]`;
@@ -453,17 +458,18 @@ class Plane {
 	}
 
 	draw_objects_gl(transform, timestamp) {
+		this.client.gl_world_space = this.world_space;
 		for(let [atom, lastbounds] of this.last_draw_gl) {
 			if(!this.atoms.has(atom)) {
 				for(let x = lastbounds.left; x < lastbounds.right; x++) {
-					for(let y = lastbounds.bottom; x < lastbounds.top; x++) {
+					for(let y = lastbounds.bottom; y < lastbounds.top; y++) {
 						let loc = `[${x},${y}]`;
 						let set = this.tiles.get(loc);
 						if(set)
 							set.delete(atom);
 					}
 				}
-				this.last_draw.delete(atom);
+				this.last_draw_gl.delete(atom);
 			}
 		}
 		for(let atom of [...this.atoms].sort(Atom.atom_comparator)) {
@@ -485,7 +491,7 @@ class Plane {
 				|| absolute_bounds.top != last_absolute_bounds.top) {
 				if(last_absolute_bounds) {
 					for(let x = last_absolute_bounds.left; x < last_absolute_bounds.right; x++) {
-						for(let y = last_absolute_bounds.bottom; x < last_absolute_bounds.top; x++) {
+						for(let y = last_absolute_bounds.bottom; y < last_absolute_bounds.top; y++) {
 							let loc = `[${x},${y}]`;
 							let set = this.tiles.get(loc);
 							if(set)
@@ -494,7 +500,7 @@ class Plane {
 					}
 				}
 				for(let x = absolute_bounds.left; x < absolute_bounds.right; x++) {
-					for(let y = absolute_bounds.bottom; x < absolute_bounds.top; x++) {
+					for(let y = absolute_bounds.bottom; y < absolute_bounds.top; y++) {
 						let loc = `[${x},${y}]`;
 						let set = this.tiles.get(loc);
 						if(!set) {
@@ -504,6 +510,7 @@ class Plane {
 						set.add(atom);
 					}
 				}
+				this.last_draw_gl.set(atom, absolute_bounds);
 			}
 
 			// now for the drawing

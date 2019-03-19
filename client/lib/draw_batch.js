@@ -57,10 +57,10 @@ class DrawBatch {
 
 	assign_uniforms() {
 		const gl = this.client.gl;
-		let viewport = gl.getParameter(gl.VIEWPORT);
-		gl.uniform2f(gl.getUniformLocation(this.program, "u_viewport_size"), viewport[2], viewport[3]);
-		gl.uniform2fv(gl.getUniformLocation(this.program, "u_viewport_tile_size"), this.client.gl_viewport_tile_size);
-		gl.uniform2fv(gl.getUniformLocation(this.program, "u_world_origin"), this.client.gl_world_origin);
+		let uniforms = this.client.gl_uniform_cache.get(this.program);
+		gl.uniform2fv(uniforms.u_viewport_size, this.client.gl_viewport);
+		gl.uniform2fv(uniforms.u_viewport_tile_size, this.client.gl_viewport_tile_size);
+		gl.uniform2fv(uniforms.u_world_origin, this.client.gl_world_origin);
 	}
 
 	draw() {

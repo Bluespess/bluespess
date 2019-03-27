@@ -9,6 +9,11 @@ const Sound = require('./lib/sound.js');
 const Matrix = require('./lib/matrix.js');
 const {Eye, Plane} = require('./lib/eye.js');
 
+const Lighting = require('./lib/lighting.js');
+const IconLoader = require('./lib/icon_loader.js');
+const Renderer = require('./lib/renderer.js');
+const AudioLoader = require('./lib/audio_loader.js');
+
 class BluespessClient extends EventEmitter {
 	constructor(wsurl, resRoot = "") {
 		super();
@@ -36,7 +41,7 @@ class BluespessClient extends EventEmitter {
 			if(global.AudioContext)
 				this.audio_ctx = new AudioContext();
 		}
-		this.importModule(require('./lib/lighting.js'));
+		this.importModule(Lighting);
 	}
 
 	handle_login() {
@@ -315,10 +320,9 @@ BluespessClient.dropdown = function(elem1, elem2, {point = null, autoremove = tr
 	if(autoremove)
 		elem2.focus();
 };
-
-BluespessClient.prototype.enqueue_icon_meta_load = require('./lib/icon_loader.js');
-BluespessClient.prototype.anim_loop = require('./lib/renderer.js');
-BluespessClient.prototype.get_audio_buffer = require('./lib/audio_loader.js');
+BluespessClient.prototype.enqueue_icon_meta_load = IconLoader;
+BluespessClient.prototype.anim_loop = Renderer;
+BluespessClient.prototype.get_audio_buffer = AudioLoader;
 
 BluespessClient.Atom = Atom;
 BluespessClient.Component = Component;

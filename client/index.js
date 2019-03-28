@@ -9,7 +9,7 @@ const Sound = require('./lib/sound.js');
 const Matrix = require('./lib/matrix.js');
 const {Eye, Plane} = require('./lib/eye.js');
 
-const Lighting = require('./lib/lighting.js');
+const LightingModule = require('./lib/lighting.js');
 const IconLoader = require('./lib/icon_loader.js');
 const Renderer = require('./lib/renderer.js');
 const AudioLoader = require('./lib/audio_loader.js');
@@ -41,7 +41,7 @@ class BluespessClient extends EventEmitter {
 			if(global.AudioContext)
 				this.audio_ctx = new AudioContext();
 		}
-		this.importModule(Lighting);
+		this.importModule(LightingModule);
 	}
 
 	handle_login() {

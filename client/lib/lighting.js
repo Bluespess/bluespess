@@ -1,5 +1,5 @@
 'use strict';
-const {Component} = require('../index.js');
+const Component = require('./component.js');
 
 class LightingObject extends Component {
 	constructor(atom, template) {

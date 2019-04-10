@@ -55,6 +55,7 @@ class Eye extends EventEmitter {
 	draw_gl(timestamp) {
 		if(!this.canvas)
 			return;
+		this.client.gl_texture_cache.set("internal/lighting", null);
 		const gl = this.client.gl;
 		let max_width = Math.max(gl.canvas.width, this.canvas.width);
 		let max_height = Math.max(gl.canvas.height, this.canvas.height);
@@ -583,7 +584,15 @@ class WorldPlane extends Plane {
 class LightingPlane extends WorldPlane {
 	constructor(eye, id) {
 		super(eye, id);
+		let gl = this.client.gl;
 		this.no_click = true;
+		this.framebuffer = gl.createFramebuffer();
+		this.color_texture = gl.createTexture();
+		this.depth_renderbuffer = gl.createRenderbuffer();
+		this.last_fb_width = -1;
+		this.last_fb_height = -1;
+		this.texture_float = gl.getExtension('OES_texture_float');
+		this.instanced_arrays = gl.getExtension('ANGLE_instanced_arrays');
 	}
 
 	composite_plane(eye_ctx, timestamp) {
@@ -603,6 +612,27 @@ class LightingPlane extends WorldPlane {
 		eye_ctx.globalCompositeOperation = "destination-in";
 		eye_ctx.drawImage(this.draw_canvas, 0, 0);
 		eye_ctx.globalCompositeOperation = "source-over";
+	}
+
+	draw_gl(transform, timestamp) {
+		let gl = this.client.gl;
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
+		if(this.eye.canvas.width != this.last_fb_width || this.eye.canvas.height != this.last_fb_height) {
+			this.last_fb_width = this.eye.canvas.width;
+			this.last_fb_height = this.eye.canvas.height;
+			gl.bindTexture(gl.TEXTURE_2D, this.color_texture);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.last_fb_width, this.last_fb_height, 0, gl.RGBA, this.texture_float ? gl.FLOAT : gl.UNSIGNED_BYTE, null);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.bindRenderbuffer(gl.RENDERBUFFER, this.depth_renderbuffer);
+			gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this.last_fb_width, this.last_fb_height);
+			gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.color_texture, 0);
+			gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.depth_renderbuffer);
+		}
+		this.draw_objects_gl(transform, timestamp);
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+		this.client.gl_texture_cache.set("internal/lighting", this.color_texture);
 	}
 }
 

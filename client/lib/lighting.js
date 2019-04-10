@@ -21,10 +21,13 @@ class LightingObject extends Component {
 			this.dirty = true;
 		} else if(this.radius != this.last_radius) {
 			this.dirty = true;
+			this.gl_dirty = true;
 		} else if(this.shadows_list != this.last_shadows_list) {
 			this.dirty = true;
+			this.gl_dirty = true;
 		} else if(!this.last_disp || this.last_disp.dispx != disp.dispx || this.last_disp.dispy != disp.dispy) {
 			this.dirty = true;
+			this.gl_dirty = true;
 		} else if(this.a.client.soft_shadow_resolution != this.last_resolution) {
 			this.random_angle_offset = Math.random();
 			this.dirty = true;
@@ -233,6 +236,11 @@ class LightingObject extends Component {
 		ctx.globalCompositeOperation = "lighter";
 		ctx.drawImage(this.canvas,-this.radius*32,-this.radius*32);
 		ctx.globalCompositeOperation = "source-over";
+	}
+
+	draw_gl(transform) {
+		let gl = this.a.client.gl;
+
 	}
 }
 

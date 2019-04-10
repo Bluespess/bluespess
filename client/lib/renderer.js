@@ -71,6 +71,18 @@ void main() {     // fucking shit why is there no bitwise and
 }
 `);
 
+	this.shader_lighting_shadows = this.compile_shader_program(`
+precision mediump float;
+
+attribute vec3 a_position_cast;
+attribute float a_soft_index;
+uniform float u_soft_index;
+uniform float u_radius;
+uniform vec2 u_pos;
+uniform vec2 u_world_origin;
+uniform vec2 u_viewport_tile_size;
+`)
+
 	this.gl_world_origin = [0, 0];
 	this.gl_viewport_tile_size = [1, 1];
 	this.gl_viewport = [32, 32];

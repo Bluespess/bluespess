@@ -81,7 +81,25 @@ uniform float u_radius;
 uniform vec2 u_pos;
 uniform vec2 u_world_origin;
 uniform vec2 u_viewport_tile_size;
-`)
+
+void main() {
+	vec2 origin_ray = vec2(a_position_cast.xy - u_pos);
+	vec2 local_pos = normalize(vec2(origin_ray.y, -origin_ray.x)) * (u_soft_index + a_soft_index);
+	vec2 out_pos = a_position_cast.xy;
+	if(a_position_cast.z > 0.5) {
+		out_pos = normalize(out_pos - local_pos) * u_radius + local_pos;
+	}
+	gl_Position = vec4((out_pos - (u_world_origin+vec2(0.5,0.5))) / u_viewport_tile_size * 2.0, 0, 1);
+}
+`,`
+precision mediump float;
+
+uniform int u_soft_precision;
+
+void main() {
+	gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0/float(u_soft_precision));
+}
+`);
 
 	this.gl_world_origin = [0, 0];
 	this.gl_viewport_tile_size = [1, 1];

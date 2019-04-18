@@ -76,6 +76,7 @@ precision mediump float;
 
 attribute vec3 a_position_cast;
 attribute float a_soft_index;
+
 uniform float u_soft_index;
 uniform float u_radius;
 uniform vec2 u_pos;
@@ -114,6 +115,14 @@ void main() {
 		u_viewport_size: gl.getUniformLocation(this.shader_default, "u_viewport_size"),
 		u_viewport_tile_size: gl.getUniformLocation(this.shader_default, "u_viewport_tile_size"),
 		u_world_origin: gl.getUniformLocation(this.shader_default, "u_world_origin")
+	});
+
+	this.gl_uniform_cache.set(this.shader_lighting_shadows, {
+		u_soft_index: gl.getUniformLocation(this.shader_lighting_shadows, "u_soft_index"),
+		u_radius: gl.getUniformLocation(this.shader_lighting_shadows, "u_soft_index"),
+		u_pos: gl.getUniformLocation(this.shader_lighting_shadows, "u_pos"),
+		u_world_origin: gl.getUniformLocation(this.shader_lighting_shadows, "u_world_origin"),
+		u_viewport_tile_size: gl.getUniformLocation(this.shader_lighting_shadows, "u_viewport_tile_size")
 	});
 
 	this.gl_white_texture = gl.createTexture();
